@@ -1,19 +1,4 @@
-#!/usr/bin/env bash
-
-# Script name: dm-record
-# Description: Dmenu script to record video,audio,webcam.
-# Dependencies: dmenu, ffmpeg, pulseaudio, alsa, slop (for recording a specific area)
-# GitLab: https://www.gitlab.com/dwt1/dmscripts
-# License: https://www.gitlab.com/dwt1/dmscripts/LICENSE
-# Contributors: ashincoder
-#               HostGrady
-
-# Usage:
-# `$0`: Ask for recording type via dmenu
-# `$0 screencast`: Record both audio and screen
-# `$0 video`: Record only screen
-# `$0 audio`: Record only audio
-# `$0 kill`: Kill existing recording
+#!/bin/bash
 
 killrecording() {
 	recpid="$(cat /tmp/recordingpid)"
@@ -34,7 +19,7 @@ screencast() { \
 	-i "$DISPLAY" \
 	-f pulse -i default \
  	-c:v libx264rgb -qp 0 -r 30 -crf 0 -preset ultrafast -c:a aac \
-	"$HOME/Videos/screencast-$(date '+%y%m%d-%H%M-%S').mkv" &
+	"$HOME/videos/recordings/screencast-$(date  +%Y_%m_%d-%H:%M:%S).mkv" &
 	echo $! > /tmp/recordingpid
     }
 
@@ -44,23 +29,7 @@ video() { ffmpeg \
 	-i "$DISPLAY" \
  	-c:v libx264rgb -qp 0 -r 30 \
     -crf 0 -preset ultrafast \
-	"$HOME/Videos/video-$(date '+%y%m%d-%H%M-%S').mkv" &
-	echo $! > /tmp/recordingpid
-	}
-
-webcamhidef() { ffmpeg \
-	-f v4l2 \
-	-i /dev/video0 \
-	-video_size 1920x1080 \
-	"$HOME/webcam-$(date '+%y%m%d-%H%M-%S').mkv" &
-	echo $! > /tmp/recordingpid
-	}
-
-webcam() { ffmpeg \
-	-f v4l2 \
-	-i /dev/video0 \
-	-video_size 640x480 \
-	"$HOME/webcam-$(date '+%y%m%d-%H%M-%S').mkv" &
+	"$HOME/videos/recordings/video-$(date  +%Y_%m_%d-%H:%M:%S).mkv" &
 	echo $! > /tmp/recordingpid
 	}
 
@@ -68,51 +37,15 @@ audio() { \
 	ffmpeg \
 	-f alsa -i default \
 	-c:a flac \
-	"$HOME/audio-$(date '+%y%m%d-%H%M-%S').flac" &
+	"$HOME/audio-$(date  +%Y_%m_%d-%H:%M:%S).flac" &
 	echo $! > /tmp/recordingpid
 	}
-
-# the dmenu portions of this script are broken
-# TODO: deprecate or rewrite
-
-askrecording() { \
-	choice=$(printf "screencast\\nvideo\\nvideo selected\\naudio\\nwebcam\\nwebcam (hi-def)" | ${DMENU} "Select recording style:")
-	case "$choice" in
-		screencast) screencast;;
-		audio) audio;;
-		video) video;;
-		*selected) videoselected;;
-		webcam) webcam;;
-		"webcam (hi-def)") webcamhidef;;
-	esac
-	}
-
-asktoend() { \
-	response=$(printf "No\\nYes" | ${DMENU} "Recording still active. End recording?") &&
-	[ "$response" = "Yes" ] &&  killrecording
-	}
-
-videoselected()
-{
-	slop -f "%x %y %w %h" > /tmp/slop
-	read -r X Y W H < /tmp/slop
-	rm /tmp/slop
-
-	ffmpeg \
-	-f x11grab \
-	-framerate 60 \
-	-video_size "$W"x"$H" \
-	-i :0.0+"$X,$Y" \
-	-c:v libx264 -qp 0 -r 30 \
-	"$HOME/box-$(date '+%y%m%d-%H%M-%S').mkv" &
-	echo $! > /tmp/recordingpid
-}
 
 case "$1" in
 	screencast) screencast;;
 	audio) audio;;
 	video) video;;
-	*selected) videoselected;;
 	kill) killrecording;;
-	*) ([ -f /tmp/recordingpid ] && asktoend && exit) || askrecording;;
+	*) ([ -f /tmp/recordingpid ] && exit);;
 esac
+
