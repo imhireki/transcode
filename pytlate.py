@@ -1,4 +1,4 @@
-#!/bin/python3
+#!/usr/bin/python3
 
 import subprocess
 import json
@@ -47,7 +47,7 @@ def list_on_dmenu(items: list[str]) -> str | None:
     pipe_items = subprocess.Popen(['echo', '\n'.join(items)],
                                   stdout=subprocess.PIPE)
     selected_dmenu_item = subprocess.run(
-        ['dmenu', '-c', '-l', str(len(items))],
+        ['rofi', '-dmenu', '-c', '-l', str(len(items))],
         stdin=pipe_items.stdout,
         stdout=subprocess.PIPE)
     return selected_dmenu_item.stdout.decode('ascii')[:-1]
