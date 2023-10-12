@@ -15,13 +15,17 @@ get_downloads() {
   percentages=$(echo "$downloads" | awk -F'\\s\\s+' '{printf "%.3s\n", $3}')
   done=$(echo -e "$percentages" | awk '{ mean += $1 } END { printf "%.0f\n", mean/NR }')
 
+  # Get the average ratio from all downloads
+  ratios=$(echo "$downloads" | awk -F'\\s\\s+' '{ print  $8}')
+  ratio=$(echo -e "$ratios" | awk '{ mean += $1 } END { printf "%.2f\n", mean/NR }')
+
   # Get fields (related to all downloads) from the footer
   have=$(eval "$raw_downloads" | awk -F'\\s\\s+' '{ field = $2 } END { print field }')
   up=$(eval "$raw_downloads" | awk -F'\\s\\s+' '{ field = $3 } END { print field }')
   down=$(eval "$raw_downloads" | awk -F'\\s\\s+' '{ field = $4 } END { print field }')
 
   # Echo the downloads with the extra option
-  all_option="    all   ${done}%   ${have}  N/A         ${up}     ${down}   N/A  N/A      all"
+  all_option="    all   ${done}%   ${have}  N/A         ${up}     ${down}   ${ratio}  N/A      all"
   echo "$all_option" $'\n' "$downloads"
 }
 
