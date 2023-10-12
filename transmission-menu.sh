@@ -13,7 +13,7 @@ get_downloads() {
 
   # Get the average percentage of all downloads
   percentages=$(echo "$downloads" | awk -F'\\s\\s+' '{printf "%.3s\n", $3}')
-  done=$(echo -e "$percentages" | awk '{ mean += $1 } END { printf "%.2f\n", mean/NR }')
+  done=$(echo -e "$percentages" | awk '{ mean += $1 } END { printf "%.0f\n", mean/NR }')
 
   # Get fields (related to all downloads) from the footer
   have=$(eval "$raw_downloads" | awk -F'\\s\\s+' '{ field = $2 } END { print field }')
