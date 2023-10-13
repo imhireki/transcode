@@ -8,8 +8,16 @@ get_downloads() {
   # Removes the header and footer
   downloads=$(eval $raw_downloads | awk 'NR > 2 {print payload} {payload=$0}')
 
-  # Return if there's no downloads or the daemon is down
-  if [ -z "$downloads" ]; then return; fi
+  # Return and stop the daemon if there's no downloads
+  if [ -z "$downloads" ]; then
+
+    # Stop the daemon if it is up
+    if pidof transmission-daemon > /dev/null; then
+       killall transmission-daemon;
+    fi
+
+    return
+  fi
 
   # Get the average percentage of all downloads
   percentages=$(echo "$downloads" | awk -F'\\s\\s+' '{printf "%.3s\n", $3}')
