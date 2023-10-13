@@ -103,7 +103,32 @@ control_download() {
 }
 
 
-downloads=$(get_downloads)
-selected_download=$(list_download_titles "$downloads")
-get_download_details "$selected_download"
-control_download "$selected_download"
+start_clipboard_magnet() {
+  # Start transmission-daemon
+  pidof transmsission-daemon || transmission-daemon
+
+  # Wait for the daemon to start
+  while ! pidof transmission-daemon; do
+    sleep 1
+  done
+
+  # Start magnet from the clipboard
+  transmission-remote -a "$(xclip -o -selection clipboard)" -s
+
+  # Clean clipboard
+  echo "" | xclip -selection clipboard
+}
+
+
+# Start magnet
+if [[ "$(xclip -o -selection clipboard)" == "magnet:?"* ]]; then
+  start_clipboard_magnet
+# Open menu
+else
+  downloads=$(get_downloads)
+  selected_download=$(list_download_titles "$downloads")
+  get_download_details "$selected_download"
+  control_download "$selected_download"
+fi
+
+
