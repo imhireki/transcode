@@ -124,7 +124,7 @@ start_clipboard_magnet() {
   transmission-remote -a "$(xclip -o -selection clipboard)" -s
 
   # Clean clipboard
-  echo "" | xclip -selection clipboard
+  cat /dev/null | xclip -selection clipboard
 }
 
 
