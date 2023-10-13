@@ -107,7 +107,7 @@ control_download() {
       fi
       ;;
 
-    "Kill Daemon") killall transmission-daemon;;
+    "Kill daemon") killall transmission-daemon;;
   esac
 }
 
@@ -132,7 +132,7 @@ start_clipboard_magnet() {
 
 # Start magnet
 if [[ $(xclip -o -selection clipboard 2> /dev/null) == "magnet:?"* ]]; then
-  start_clipboard_magnet
+  start_clipboard_magnet &
 # Open menu
 else
   downloads=$(get_downloads)
