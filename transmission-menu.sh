@@ -8,16 +8,8 @@ get_downloads() {
   # Removes the header and footer
   downloads=$(eval $raw_downloads | awk 'NR > 2 {print payload} {payload=$0}')
 
-  # Return and stop the daemon if there's no downloads
-  if [ -z "$downloads" ]; then
-
-    # Stop the daemon if it is up
-    if pidof transmission-daemon > /dev/null; then
-       killall transmission-daemon;
-    fi
-
-    return
-  fi
+  # Return if there's no downloads
+  if [ -z "$downloads" ]; then return; fi
 
   # Get the average percentage of all downloads
   percentages=$(echo "$downloads" | awk -F'\\s\\s+' '{printf "%.3s\n", $3}')
@@ -105,7 +97,16 @@ control_download() {
   case $selected_control in
     Stop) transmission-remote -t $download_id -S;;
     Resume) transmission-remote -t $download_id -s;;
-    Remove) transmission-remote -t $download_id -r;;
+    Remove) 
+      transmission-remote -t $download_id -r
+
+      # Kill daemon if there's no downloads
+      downloads=$(get_downloads)
+      if [ -z "$downloads" ]; then
+        killall transmission-daemon
+      fi
+      ;;
+
     "Kill Daemon") killall transmission-daemon;;
   esac
 }
