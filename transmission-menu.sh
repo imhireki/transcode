@@ -114,12 +114,13 @@ control_download() {
 
 start_clipboard_magnet() {
   # Start transmission-daemon
-  pidof transmsission-daemon > /dev/null || transmission-daemon
-
-  # Wait for the daemon to start
-  while ! pidof transmission-daemon > /dev/null; do
-    sleep 1
-  done
+  if ! pidof transmission-daemon > /dev/null; then
+    transmission-daemon
+    # Wait for the daemon to start
+    while ! pidof transmission-daemon > /dev/null; do
+      sleep 1
+    done
+  fi
 
   # Start magnet from the clipboard
   transmission-remote -a "$(xclip -o -selection clipboard)" -s
