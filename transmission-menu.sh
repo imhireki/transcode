@@ -113,10 +113,10 @@ control_download() {
 
 start_clipboard_magnet() {
   # Start transmission-daemon
-  pidof transmsission-daemon || transmission-daemon
+  pidof transmsission-daemon > /dev/null || transmission-daemon
 
   # Wait for the daemon to start
-  while ! pidof transmission-daemon; do
+  while ! pidof transmission-daemon > /dev/null; do
     sleep 1
   done
 
