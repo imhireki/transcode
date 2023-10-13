@@ -129,7 +129,7 @@ start_clipboard_magnet() {
 
 
 # Start magnet
-if [[ "$(xclip -o -selection clipboard)" == "magnet:?"* ]]; then
+if [[ $(xclip -o -selection clipboard 2> /dev/null) == "magnet:?"* ]]; then
   start_clipboard_magnet
 # Open menu
 else
