@@ -3,7 +3,6 @@
 
 get_downloads() {
   raw_downloads="transmission-remote -l"
-  # raw_downloads="cat /home/hireki/documents/transmission_remote"
 
   # Removes the header and footer
   downloads=$(eval $raw_downloads | awk 'NR > 2 {print payload} {payload=$0}')
@@ -88,15 +87,13 @@ control_download() {
   download_id=$(echo "$selected_download" | awk -F'\\s\\s+' '{print $2}' | grep -Po "(\d+|all)")
 
   # Control options
-  controls=( "Stop" "Resume" "Remove" "Kill Daemon" )
+  controls=( "Remove" "Stop" "Resume" "Kill daemon" )
 
   # List the control (select to perform an action, exit otherwise)
   selected_control=$(printf '%s\n' "${controls[@]}" | rofi -dmenu -i -p "Controls") || exit
 
   # Perform action
   case $selected_control in
-    Stop) transmission-remote -t $download_id -S;;
-    Resume) transmission-remote -t $download_id -s;;
     Remove) 
       transmission-remote -t $download_id -r
 
@@ -106,7 +103,8 @@ control_download() {
         killall transmission-daemon
       fi
       ;;
-
+    Stop) transmission-remote -t $download_id -S;;
+    Resume) transmission-remote -t $download_id -s;;
     "Kill daemon") killall transmission-daemon;;
   esac
 }
