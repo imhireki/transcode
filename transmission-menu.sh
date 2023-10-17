@@ -122,6 +122,9 @@ start_clipboard_magnet() {
     done
   fi
 
+  # Wait for the daemon to be able to add magnet
+  sleep 1
+
   # Start magnet from the clipboard
   transmission-remote -a "$(xclip -o -selection clipboard)" -s
 
