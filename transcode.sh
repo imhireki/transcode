@@ -1,8 +1,8 @@
 #!/usr/bin/bash
 
-target=$1
-storage="/mnt/hd/transcoded/$2"
-mkdir $storage
+# target=$1
+# storage="/mnt/hd/transcoded/$2"
+# mkdir $storage
 
 
 function transcode_video {
@@ -32,5 +32,27 @@ function transcode_audio {
 }
 
 
-transcode_video
+list_directories() {
+  base_dir="/mnt/hd/animes"
+
+  while true; do
+    selected_dir=$(find "$base_dir" -maxdepth 1 -type d | dmenu)
+
+    # Nothing selected
+    if [ -z "$selected_dir" ]; then
+      break
+    # Nested dir selected
+    elif [ "$base_dir" != "$selected_dir" ]; then
+      base_dir="$selected_dir"
+
+    # Dir confirmed
+    else
+      echo "$selected_dir"
+      break
+    fi
+  done
+}
+
+
+list_directories
 
