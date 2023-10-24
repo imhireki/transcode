@@ -98,3 +98,17 @@ get_subtitle_arguments() {
 
   echo "$codec_args"
 }
+
+
+get_video_arguments() {
+  streams="$1"
+
+  # Video: h264 (High 10),
+  codec=$(echo "$streams" | grep "Video" -m 1 \
+     | grep -Po "(?<=Video: ).*?(?=,)")
+
+  transcode_args="-c:v h264_nvenc -profile:v high -pix_fmt yuv420p -preset fast"
+
+  [ "$codec" != "h264 (High)" ] && echo "$transcode_args" || echo ""
+}
+
