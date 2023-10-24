@@ -75,7 +75,7 @@ get_codecs() {
 }
 
 
-get_subtitle_arguments() {
+get_audio_arguments() {
   streams="$1"
   codec_args=""
 
