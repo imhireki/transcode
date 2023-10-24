@@ -53,6 +53,7 @@ list_directories() {
   done
 }
 
+
 get_codecs() {
   media="$1"
   streams=$(ffmpeg -i "$media" 2>&1 | grep "Stream #0:" )
@@ -73,3 +74,27 @@ get_codecs() {
   # echo "$codecs"
 }
 
+
+get_subtitle_arguments() {
+  streams="$1"
+  codec_args=""
+
+  # Make an array out of the audio streams
+  readarray -t audio_streams < <(echo "$streams" | grep "Audio")
+
+  for audio_stream in "${audio_streams[@]}"; do
+    # Audio: aac (LC), -> aac (LC)
+    codec=$(echo "$audio_stream" | grep -Po "(?<=Audio: ).*?(?=,)")
+
+    # #0:2(eng) -> 2
+    stream_id=$(echo "$audio_stream" | grep -Po "(?<=#0:)\d*?(?=\(\w+\))")
+ 
+    if [[ "$codec" =~ ^(aac \(LC\)|flac|opus|ac3|mp3)$ ]]; then
+      codec_args+="-c:${stream_id} copy "
+    else
+      codec_args+="-c:${stream_id} aac "
+    fi
+  done
+
+  echo "$codec_args"
+}
