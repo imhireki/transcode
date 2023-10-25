@@ -77,7 +77,7 @@ get_codecs() {
 
 get_audio_arguments() {
   streams="$1"
-  codec_args=""
+  codec_args=()
 
   # Make an array out of the audio streams
   readarray -t audio_streams < <(echo "$streams" | grep "Audio")
@@ -90,13 +90,13 @@ get_audio_arguments() {
     stream_id=$(echo "$audio_stream" | grep -Po "(?<=#0:)\d*?(?=\(\w+\))")
  
     if [[ "$codec" =~ ^(aac \(LC\)|flac|opus|ac3|mp3)$ ]]; then
-      codec_args+="-c:${stream_id} copy "
+      codec_args+=("-c:${stream_id} copy")
     else
-      codec_args+="-c:${stream_id} aac "
+      codec_args+=("-c:${stream_id} aac")
     fi
   done
 
-  echo "$codec_args"
+  echo "${codec_args[@]}"
 }
 
 
@@ -111,4 +111,3 @@ get_video_arguments() {
 
   [ "$codec" != "h264 (High)" ] && echo "$transcode_args" || echo ""
 }
-
