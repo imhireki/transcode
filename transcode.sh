@@ -111,3 +111,31 @@ get_video_arguments() {
 
   [ "$codec" != "h264 (High)" ] && echo "$transcode_args" || echo ""
 }
+
+
+filter_streams_by_type() { 
+  streams="$1"
+  target_type="$2"
+
+  streams_array="[]"
+
+  # Iterate over the json streams
+  while IFS= read -r stream; do
+    codec_type=$(echo "$stream" | jq -r ".codec_type")
+
+    # Append to streams_array the target stream
+    if [ "$codec_type" == "$target_type" ]; then
+      streams_array=$(echo "$streams_array" \
+        | jq --argjson streams "$stream" ". + [$stream]")
+    fi
+  done < <(echo "$streams")
+
+  echo "$streams_array"
+
+  # streams=$(ffprobe -v quiet -show_streams -print_format json "$1" | jq -c ".streams[]")
+  # audio_streams=$(filter_streams_by_type "$streams" "audio")
+
+  # while IFS= read -r stream; do
+  #   echo "$stream" | jq -r ".codec_name"
+  # done < <(echo "$audio_streams" | jq -c ".[]")
+}
