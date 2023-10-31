@@ -54,27 +54,6 @@ list_directories() {
 }
 
 
-get_codecs() {
-  media="$1"
-  streams=$(ffmpeg -i "$media" 2>&1 | grep "Stream #0:" )
-
-  # Remove the thumbnail (v:1) and get the video's codec 
-  video_codec=$(echo "$streams" | grep "Video" -m 1 \
-    | grep -Po "(?<=Video: ).*?(?=,)")  # h264 (High 10)
-
-  # Get all the audios' codecs
-  audio_codecs=$(echo "$streams" | grep "Audio" \
-    | grep -Po "(?<=Audio: ).*?(?=,)")  # aac (LC)
-
-  # Get all the subtitles' codecs
-  subtitle_codecs=$(echo "$streams"  | grep "Subtitle" \
-    | grep -Po "(?<=Subtitle: ).*?(?=,|\(default\)|$)")  # ass
-
-  # codecs=$(get_codecs "$1")
-  # echo "$codecs"
-}
-
-
 get_audio_arguments() {
   streams="$1"
   codec_args=()
