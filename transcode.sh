@@ -177,3 +177,38 @@ _get_supported_args() {
   echo "${codec_args[@]}"
 }
 
+
+_get_unsupported_args() {
+  unsupported_streams="$1"
+  media="$2"
+
+  sub_with_bytes=()
+
+  while IFS= read -r sub_stream; do
+    num_bytes=$(echo "$sub_stream" | jq -r ".tags" \
+      | grep -i -Po '".*byte.*": "\d+"' \
+      | grep -Po '(?<=: ")\d+')
+
+    stream_index=$(echo "$sub_stream" | jq -r ".index")
+
+    # Write to a tmp file to get its bytes
+    if [ -z "$num_bytes" ]; then
+      ffmpeg -nostdin -v quiet -i "$media" \
+        -map 0:"$stream_index" -c copy  /tmp/transcode_sub.mkv
+      num_bytes=$(stat -c %s /tmp/transcode_sub.mkv)
+      rm /tmp/transcode_sub.mkv
+    fi
+
+    sub_with_bytes+=("${stream_index} ${num_bytes}")
+
+  done < <(echo "$unsupported_streams" | jq -c ".[]")
+
+  # Sort by num of bytes
+  readarray -t sorted_sub_with_bytes < \
+      <(printf "%s\n" "${sub_with_bytes[@]}" | sort -k2,2nr)
+
+  max_bytes_sub=$(printf "%s\n" "${sorted_sub_with_bytes[@]}"\
+      | awk 'NR == 1 {print $1}')
+
+  echo "-filter_complex '[0:v:0][0:${max_bytes_sub}]' -map '[v]'"
+}
