@@ -139,3 +139,24 @@ filter_streams_by_type() {
   #   echo "$stream" | jq -r ".codec_name"
   # done < <(echo "$audio_streams" | jq -c ".[]")
 }
+
+
+_split_streams_by_compatibility() {
+  streams="$1"
+  split_streams='{"supported": [],"unsupported": []}'
+
+  while IFS= read -r stream; do
+    codec_name=$(echo "$stream" | jq -r ".codec_name")
+
+    if [[ "$codec_name" =~ ^(ass|srt)$ ]]; then
+      split_streams=$(echo "$split_streams" | jq --argjson stream \
+                      "$stream" ".supported += [$stream]")
+    else
+      split_streams=$(echo "$split_streams" | jq --argjson stream \
+                      "$stream" ".unsupported += [$stream]")
+    fi
+  done < <(echo "$streams" | jq -c ".[]")
+
+  echo "$split_streams"
+}
+  
