@@ -212,3 +212,26 @@ _get_unsupported_args() {
 
   echo "-filter_complex '[0:v:0][0:${max_bytes_sub}]' -map '[v]'"
 }
+
+
+get_subtitle_arguments() {
+  streams="$1"
+  media="$2"
+
+  sub_streams=$(filter_streams_by_type "$streams" "subtitle")
+  split_streams=$(_split_streams_by_compatibility "$sub_streams")
+
+  # There's supported streams (echo its args)
+  supported_streams=$(echo "$split_streams" | jq -c ".supported")
+  supported_args=$(_get_supported_args "$supported_streams")
+  [ -n "$supported_args" ] && echo "${supported_args[@]}" && return
+
+  # There's ONLY unsupported streams (echo args for the dialogue)
+  unsupported_streams=$(echo "$split_streams" | jq -c ".unsupported")
+  unsupported_args=$(_get_unsupported_args "$unsupported_streams" "$media")
+  [ -n "$unsupported_args" ] && echo "$unsupported_args" && return
+
+  # streams=$(ffprobe -v quiet -show_streams -print_format json "$1" | jq -c ".streams[]")
+  # echo $(get_subtitle_arguments "$streams" "$1")
+}
+
