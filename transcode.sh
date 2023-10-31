@@ -159,4 +159,21 @@ _split_streams_by_compatibility() {
 
   echo "$split_streams"
 }
-  
+
+
+_get_supported_args() {
+  supported_streams="$1"
+  codec_args=()
+
+  # Loop through the subtitle streams
+  while IFS= read -r sub_stream; do
+    codec_name=$(echo "$sub_stream" | jq -r ".codec_name")
+    stream_index=$(echo "$sub_stream" | jq -r ".index")
+
+    if [[ "$codec_name" =~ ^(ass|srt)$ ]]; then
+      codec_args+=("-c:$stream_index copy")
+    fi
+  done < <(echo "$supported_streams" | jq -c ".[]")
+  echo "${codec_args[@]}"
+}
+
