@@ -54,31 +54,6 @@ list_directories() {
 }
 
 
-get_audio_arguments() {
-  streams="$1"
-  codec_args=()
-
-  # Make an array out of the audio streams
-  readarray -t audio_streams < <(echo "$streams" | grep "Audio")
-
-  for audio_stream in "${audio_streams[@]}"; do
-    # Audio: aac (LC), -> aac (LC)
-    codec=$(echo "$audio_stream" | grep -Po "(?<=Audio: ).*?(?=,)")
-
-    # #0:2(eng) -> 2
-    stream_id=$(echo "$audio_stream" | grep -Po "(?<=#0:)\d*?(?=\(\w+\))")
- 
-    if [[ "$codec" =~ ^(aac \(LC\)|flac|opus|ac3|mp3)$ ]]; then
-      codec_args+=("-c:${stream_id} copy")
-    else
-      codec_args+=("-c:${stream_id} aac")
-    fi
-  done
-
-  echo "${codec_args[@]}"
-}
-
-
 filter_streams_by_type() { 
   streams="$1"
   target_type="$2"
@@ -104,6 +79,28 @@ filter_streams_by_type() {
   # while IFS= read -r stream; do
   #   echo "$stream" | jq -r ".codec_name"
   # done < <(echo "$audio_streams" | jq -c ".[]")
+}
+
+
+get_audio_arguments() {
+  streams="$1"
+
+  audio_streams=$(filter_streams_by_type "$streams" "audio")
+  codec_args=()
+
+  while IFS= read -r stream; do
+    codec_name=$(echo "$stream" | jq -r ".codec_name")
+    stream_index=$(echo "$stream" | jq -r ".index")
+
+    if [[ "$codec_name" =~ (aac|flac|opus|ac3|mp3) ]]; then
+      codec_args+=("-c:${stream_index} copy")
+    else
+      codec_args+=("-c:${stream_index} aac")
+    fi
+
+  done < <(echo "$audio_streams" | jq -c ".[]")
+
+  echo "${codec_args[@]}"
 }
 
 
