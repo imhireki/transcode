@@ -72,13 +72,6 @@ filter_streams_by_type() {
   done < <(echo "$streams")
 
   echo "$streams_array"
-
-  # streams=$(ffprobe -v quiet -show_streams -print_format json "$1" | jq -c ".streams[]")
-  # audio_streams=$(filter_streams_by_type "$streams" "audio")
-
-  # while IFS= read -r stream; do
-  #   echo "$stream" | jq -r ".codec_name"
-  # done < <(echo "$audio_streams" | jq -c ".[]")
 }
 
 
@@ -223,8 +216,5 @@ get_subtitle_arguments() {
   unsupported_streams=$(echo "$split_streams" | jq -c ".unsupported")
   unsupported_args=$(_get_unsupported_args "$unsupported_streams" "$media")
   [ -n "$unsupported_args" ] && echo "$unsupported_args" && return
-
-  # streams=$(ffprobe -v quiet -show_streams -print_format json "$1" | jq -c ".streams[]")
-  # echo $(get_subtitle_arguments "$streams" "$1")
 }
 
