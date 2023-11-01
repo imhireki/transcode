@@ -79,19 +79,6 @@ get_audio_arguments() {
 }
 
 
-get_video_arguments() {
-  streams="$1"
-
-  # Video: h264 (High 10),
-  codec=$(echo "$streams" | grep "Video" -m 1 \
-     | grep -Po "(?<=Video: ).*?(?=,)")
-
-  transcode_args="-c:v h264_nvenc -profile:v high -pix_fmt yuv420p -preset fast"
-
-  [ "$codec" != "h264 (High)" ] && echo "$transcode_args" || echo ""
-}
-
-
 filter_streams_by_type() { 
   streams="$1"
   target_type="$2"
@@ -117,6 +104,36 @@ filter_streams_by_type() {
   # while IFS= read -r stream; do
   #   echo "$stream" | jq -r ".codec_name"
   # done < <(echo "$audio_streams" | jq -c ".[]")
+}
+
+
+get_video_arguments() {
+  streams="$1"
+
+  # Can include the cover
+  video_streams=$(filter_streams_by_type "$streams" "video")
+
+  while IFS= read -r stream; do
+    codec_name=$(echo "$stream" | jq -r ".codec_name")
+
+    # Not a cover
+    if ! [[ "$codec_name" =~ (jpeg|png|webp) ]]; then
+
+      profile=$(echo "$stream" | jq -r ".profile")
+      stream_index=$(echo "$stream" | jq -r ".index")
+
+      # Not h264 or h264 without High profile (transcode)
+      if [ "$codec_name" != "h264" ] || [ "$profile" != "High" ]; then
+        echo "-map 0:${stream_index} -c:v h264_nvenc -profile:v high" \
+             "-pix_fmt yuv420p -preset fast"
+      else
+        echo "-map 0:${stream_index}"
+      fi
+
+      break  # Real (not cover) stream's been found (stop the loop)
+    fi
+  done < <(echo "$video_streams" | jq -c ".[]")
+
 }
 
 
