@@ -160,7 +160,8 @@ _get_supported_args() {
       codec_args+=("-c:$stream_index copy")
     fi
   done < <(echo "$supported_streams" | jq -c ".[]")
-  echo "${codec_args[@]}"
+  # Remove "forced disposition" from all subtitles
+  echo "-disposition 0 ${codec_args[@]}"
 }
 
 
@@ -217,4 +218,3 @@ get_subtitle_arguments() {
   unsupported_args=$(_get_unsupported_args "$unsupported_streams" "$media")
   [ -n "$unsupported_args" ] && echo "$unsupported_args" && return
 }
-
