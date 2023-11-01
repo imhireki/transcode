@@ -218,3 +218,15 @@ get_subtitle_arguments() {
   unsupported_args=$(_get_unsupported_args "$unsupported_streams" "$media")
   [ -n "$unsupported_args" ] && echo "$unsupported_args" && return
 }
+
+
+get_media_filename() {
+  media="$1"
+
+  format_name=$(ffprobe -v quiet -show_entries format=format_name \
+     -print_format json "$media"| jq -r ".format.format_name")
+
+  # Echo any filename non mkv,mp4 to mkv
+  [[ "$format_name" =~ ^(matroska,webm|mov,mp4,m4a,3gp,3g2,mj2)$ ]] \
+    && echo "$media" || echo "${media::-3}mkv"
+}
