@@ -117,7 +117,7 @@ get_video_arguments() {
         echo "-map 0:${stream_index} -c:v h264_nvenc -profile:v high" \
              "-pix_fmt yuv420p -preset fast"
       else
-        echo "-map 0:${stream_index}"
+        echo "-map 0:${stream_index} -c:v copy"
       fi
 
       break  # Real (not cover) stream's been found (stop the loop)
