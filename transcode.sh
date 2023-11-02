@@ -86,9 +86,9 @@ get_audio_arguments() {
     stream_index=$(echo "$stream" | jq -r ".index")
 
     if [[ "$codec_name" =~ (aac|flac|opus|ac3|mp3) ]]; then
-      codec_args+=("-c:${stream_index} copy")
+      codec_args+=("-map 0:${stream_index} -c:${stream_index} copy")
     else
-      codec_args+=("-c:${stream_index} aac")
+      codec_args+=("-map 0:${stream_index} -c:${stream_index} aac")
     fi
 
   done < <(echo "$audio_streams" | jq -c ".[]")
