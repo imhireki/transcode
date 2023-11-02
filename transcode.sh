@@ -114,8 +114,8 @@ get_video_arguments() {
 
       # Not h264 or h264 without High profile (transcode)
       if [ "$codec_name" != "h264" ] || [ "$profile" != "High" ]; then
-        echo "-map 0:${stream_index} -c:v h264_nvenc -profile:v high" \
-             "-pix_fmt yuv420p -preset fast"
+        echo "-map 0:${stream_index} -c:${stream_index} h264_nvenc" \
+             "-profile:v high -pix_fmt yuv420p -preset fast"
       else
         echo "-map 0:${stream_index} -c:v copy"
       fi
@@ -157,11 +157,11 @@ _get_supported_args() {
     stream_index=$(echo "$sub_stream" | jq -r ".index")
 
     if [[ "$codec_name" =~ ^(ass|srt)$ ]]; then
-      codec_args+=("-c:$stream_index copy")
+      codec_args+=("-map 0:${stream_index}")
     fi
   done < <(echo "$supported_streams" | jq -c ".[]")
   # Remove "forced disposition" from all subtitles
-  echo "-disposition 0 ${codec_args[@]}"
+  echo "-disposition 0 ${codec_args[@]} -c:s copy"
 }
 
 
