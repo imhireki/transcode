@@ -224,13 +224,17 @@ get_subtitle_arguments() {
 }
 
 
-get_media_filename() {
-  media="$1"
+get_output_filename() {
+  input="$1"
+  to_directory="$2"
+
+  input_without_directory=$(awk -F "/" '{print $NF}' <<< "$input")
+  output="${to_directory}/${input_without_directory}"
 
   format_name=$(ffprobe -v quiet -show_entries format=format_name \
-     -print_format json "$media"| jq -r ".format.format_name")
+     -print_format json "$input"| jq -r ".format.format_name")
 
-  # Echo any filename non mkv,mp4 to mkv
+  # Echo output non-mkv/mp4 as mkv
   [[ "$format_name" =~ ^(matroska,webm|mov,mp4,m4a,3gp,3g2,mj2)$ ]] \
-    && echo "$media" || echo "${media::-3}mkv"
+    && echo "$output" || sed "s/\.\w\+$/.mkv/" <<< "$output"
 }
