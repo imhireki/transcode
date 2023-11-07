@@ -238,3 +238,27 @@ get_output_filename() {
   [[ "$format_name" =~ ^(matroska,webm|mov,mp4,m4a,3gp,3g2,mj2)$ ]] \
     && echo "$output" || sed "s/\.\w\+$/.mkv/" <<< "$output"
 }
+
+
+transcode() {
+  streams="$1"
+  input="$2"
+  to_directory="$3"
+
+  video_arguments=$(get_video_arguments "$streams")
+  subtitle_arguments=$(get_subtitle_arguments "$streams" "$media")
+
+  # Remove mapping and set a codec with video options
+  if [[ "$subtitle_arguments[@]" =~ (filter_complex) ]]; then
+    video_stream_index=$(echo "$video_arguments" | grep -Po "(?<=-map 0:)\d+")
+
+    video_arguments="-c:${video_stream_index} h264_nvenc -profile:v high\
+    -pix_fmt yuv420p -preset fast"
+  fi
+
+  audio_arguments=$(get_audio_arguments "$streams")
+  output_filename=$(get_output_filename "$input" "$to_directory")
+
+  ffmpeg -i "$media" $video_arguments ${subtitle_arguments[@]}\
+    $audio_arguments $output_filename
+}
