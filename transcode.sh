@@ -228,7 +228,7 @@ transcode() {
   output_filename=$(get_output_filename "$input" "$to_directory")
 
   ffmpeg -i "$media" $video_arguments ${subtitle_arguments[@]}\
-    $audio_arguments $output_filename
+    $audio_arguments "$output_filename"
 }
 
 
@@ -236,9 +236,9 @@ transcode_directory() {
   from_directory="$1"
   to_directory="$2"
 
-  for media in "$from_directory/"*; do
+  while IFS= read -r media; do
     streams=$(ffprobe -v quiet -show_streams -print_format json \
               "$media" | jq -c ".streams[]")
     transcode "$streams" "$media" "$to_directory"
-  done
+  done < <(find "$from_directory" -maxdepth 1 -type f)
 }
