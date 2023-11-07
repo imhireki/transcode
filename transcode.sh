@@ -169,7 +169,6 @@ _get_unsupported_args() {
   overlay_filter_args=("-filter_complex" "[0:v:0][0:${stream_index}]overlay[v]"
                        "-map" "[v]")
   echo "${overlay_filter_args[@]}"
-
 }
 
 
@@ -216,12 +215,16 @@ transcode() {
   video_arguments=$(get_video_arguments "$streams")
   subtitle_arguments=$(get_subtitle_arguments "$streams" "$media")
 
-  # Remove mapping and set a codec with video options
   if [[ "$subtitle_arguments[@]" =~ (filter_complex) ]]; then
     video_stream_index=$(echo "$video_arguments" | grep -Po "(?<=-map 0:)\d+")
 
+    # Remove mapping and set a codec with video options
     video_arguments="-c:${video_stream_index} h264_nvenc -profile:v high\
     -pix_fmt yuv420p -preset fast"
+
+    # Replace [0:v:0] with the actual stream index [0:video_stream_index]
+    subtitle_arguments[1]=$(echo "${subtitle_arguments[1]}"\
+      | sed "s/\[0:v:0\]/\[0:${video_stream_index}\]/g")
   fi
 
   audio_arguments=$(get_audio_arguments "$streams")
