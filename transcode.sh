@@ -117,7 +117,8 @@ get_video_arguments() {
         echo "-map 0:${stream_index} -c:${stream_index} h264_nvenc" \
              "-profile:v high -pix_fmt yuv420p -preset fast"
       else
-        echo "-map 0:${stream_index} -c:v copy"
+        echo "-map 0:${stream_index} -c:${stream_index} copy"
+
       fi
 
       break  # Real (not cover) stream's been found (stop the loop)
@@ -197,7 +198,10 @@ _get_unsupported_args() {
   max_bytes_sub=$(printf "%s\n" "${sorted_sub_with_bytes[@]}"\
       | awk 'NR == 1 {print $1}')
 
-  echo "-filter_complex '[0:v:0][0:${max_bytes_sub}]' -map '[v]'"
+  overlay_filter_args=("-filter_complex" "[0:v:0][0:${stream_index}]overlay[v]"
+                       "-map" "[v]")
+  echo "${overlay_filter_args[@]}"
+
 }
 
 
