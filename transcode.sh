@@ -1,7 +1,7 @@
 #!/usr/bin/bash
 
 list_directories() {
-  base_dir="/mnt/hd/animes"
+  base_dir="$1"
 
   while true; do
     selected_dir=$(find "$base_dir" -maxdepth 1 -type d | dmenu)
@@ -103,7 +103,7 @@ _split_streams_by_compatibility() {
   while IFS= read -r stream; do
     codec_name=$(echo "$stream" | jq -r ".codec_name")
 
-    if [[ "$codec_name" =~ ^(ass|srt)$ ]]; then
+    if [[ "$codec_name" =~ ^(ass|subrip)$ ]]; then
       split_streams=$(echo "$split_streams" | jq --argjson stream \
                       "$stream" ".supported += [$stream]")
     else
@@ -125,7 +125,7 @@ _get_supported_args() {
     codec_name=$(echo "$sub_stream" | jq -r ".codec_name")
     stream_index=$(echo "$sub_stream" | jq -r ".index")
 
-    if [[ "$codec_name" =~ ^(ass|srt)$ ]]; then
+    if [[ "$codec_name" =~ ^(ass|subrip)$ ]]; then
       codec_args+=("-map 0:${stream_index}")
     fi
   done < <(echo "$supported_streams" | jq -c ".[]")
