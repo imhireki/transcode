@@ -240,5 +240,5 @@ transcode_directory() {
     streams=$(ffprobe -v quiet -show_streams -print_format json \
               "$media" | jq -c ".streams[]")
     transcode "$streams" "$media" "$to_directory"
-  done < <(find "$from_directory" -maxdepth 1 -type f)
+  done < <(find "$from_directory" -maxdepth 1 -type f | sort)
 }
