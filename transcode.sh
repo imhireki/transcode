@@ -227,9 +227,9 @@ transcode() {
   audio_arguments=$(get_audio_arguments "$streams")
   output_filename=$(get_output_filename "$input" "$to_directory")
 
-  ffmpeg -nostdin -i "$media" $video_arguments ${subtitle_arguments[@]}\
-    $audio_arguments "$output_filename" 2>> /tmp/transcode_stats
-
+  ffmpeg -v quiet -stats -hide_banner -nostdin -i "$media" $video_arguments \
+    ${subtitle_arguments[@]} $audio_arguments "$output_filename" \
+    2>> /tmp/transcode_stats
 }
 
 
