@@ -192,8 +192,12 @@ get_output_filename() {
   input="$1"
   to_directory="$2"
 
-  input_without_directory=$(awk -F "/" '{print $NF}' <<< "$input")
-  output="${to_directory}/${input_without_directory}"
+  # Make the input directory in the output directory
+  input_directory=$(awk -F "/" '{print $(NF-1)}' <<< "$input")
+  mkdir -p "${to_directory}/${input_directory}/"
+
+  input_without_directories=$(awk -F "/" '{print $NF}' <<< "$input")
+  output="${to_directory}/${input_directory}/${input_without_directories}"
 
   format_name=$(ffprobe -v quiet -show_entries format=format_name \
      -print_format json "$input"| jq -r ".format.format_name")
