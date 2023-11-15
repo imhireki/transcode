@@ -266,3 +266,29 @@ get_directory_progress() {
 
   echo "files ${num_output_files}/${num_input_files} (${percentage}%)"
 }
+
+
+get_stats() {
+  media="$1"
+
+  stats=$(awk -F "\r" '{print $NF }' < /tmp/transcode_stats)
+
+  frame=$(echo "$stats" | grep -Po "frame=\s*\d+" | grep -Po "\d+")
+  fps=$(echo "$stats" | grep -Po "fps=\s*\d+" | grep -Po "\d+")
+  size=$(echo "$stats" | grep -Po "size=\s*\S+" | grep -Po "\d+.*")
+  time=$(echo "$stats" | grep -Po "time=\S+" | grep -Po "(?<==)\S+")
+  bitrate=$(echo "$stats" | grep -Po "bitrate=\s*\S+" | grep -Po "(?<=[= ])\S+")
+  speed=$(echo "$stats" | grep -Po "speed=\s*\S+" | grep -Po "(?<=[= ])\S+")
+
+  duration=$(ffprobe -v error -show_entries format=duration \
+             -of default=nw=1:nk=1 "$media" | cut -d. -f1)
+
+  # Convert to seconds
+  time=$(echo "$time" | awk -F: '{ print ($1 * 3600) + ($2 * 60) + $3 }' | cut -d. -f1)
+
+  duration_percentage=$(( (time * 100) / duration ))
+
+  progress=("time ${time}s/${duration}s (${duration_percentage}%)" "speed $speed"
+            "frames $frame" "fps $fps" "size $size" "bitrate $bitrate")
+  printf "%s\n" "${progress[@]}"
+}
