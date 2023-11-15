@@ -247,3 +247,22 @@ transcode_directory() {
     transcode "$streams" "$media" "$to_directory"
   done < <(find "$from_directory" -maxdepth 1 -type f | sort)
 }
+
+
+get_directory_progress() {
+  media="$1"
+  to_directory="$2"
+
+  # input directory length
+  input_dirname=$(dirname "$media")
+  num_input_files=$(find "${input_dirname}/" -maxdepth 1 -type f | wc -l)
+
+  # Output directory length
+  last_input_directory=$(awk -F "/" '{print $(NF-1)}' <<< "$media")
+  num_output_files=$(find "${to_directory}/${last_input_directory}/" \
+    -maxdepth 1 -type f | wc -l)
+
+  percentage=$(( (num_output_files * 100) / num_input_files))
+
+  echo "files ${num_output_files}/${num_input_files} (${percentage}%)"
+}
