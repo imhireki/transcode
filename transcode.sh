@@ -189,18 +189,18 @@ get_subtitle_arguments() {
 
 
 get_output_filename() {
-  input="$1"
+  media="$1"
   to_directory="$2"
 
   # Make the input directory in the output directory
-  input_directory=$(awk -F "/" '{print $(NF-1)}' <<< "$input")
-  mkdir -p "${to_directory}/${input_directory}/"
+  last_input_directory=$(awk -F "/" '{print $(NF-1)}' <<< "$media")
+  mkdir -p "${to_directory}/${last_input_directory}/"
 
-  input_without_directories=$(awk -F "/" '{print $NF}' <<< "$input")
-  output="${to_directory}/${input_directory}/${input_without_directories}"
+  input_without_directories=$(awk -F "/" '{print $NF}' <<< "$media")
+  output="${to_directory}/${last_input_directory}/${input_without_directories}"
 
   format_name=$(ffprobe -v quiet -show_entries format=format_name \
-     -print_format json "$input"| jq -r ".format.format_name")
+     -print_format json "$media"| jq -r ".format.format_name")
 
   # Echo output non-mkv/mp4 as mkv
   [[ "$format_name" =~ ^(matroska,webm|mov,mp4,m4a,3gp,3g2,mj2)$ ]] \
@@ -210,7 +210,7 @@ get_output_filename() {
 
 transcode() {
   streams="$1"
-  input="$2"
+  media="$2"
   to_directory="$3"
 
   video_arguments=$(get_video_arguments "$streams")
@@ -229,7 +229,7 @@ transcode() {
   fi
 
   audio_arguments=$(get_audio_arguments "$streams")
-  output_filename=$(get_output_filename "$input" "$to_directory")
+  output_filename=$(get_output_filename "$media" "$to_directory")
 
   ffmpeg -v quiet -stats -hide_banner -nostdin -i "$media" $video_arguments \
     ${subtitle_arguments[@]} $audio_arguments "$output_filename" \
