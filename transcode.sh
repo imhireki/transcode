@@ -292,3 +292,14 @@ get_stats() {
             "frames $frame" "fps $fps" "size $size" "bitrate $bitrate")
   printf "%s\n" "${progress[@]}"
 }
+
+
+show_progress() {
+  media="$1"
+  to_directory="$2"
+
+  stats=$(get_stats "$media")
+  directory_progress=$(get_directory_progress "$media" "$to_directory")
+
+  echo -e "${directory_progress}\n${stats}" | rofi -dmenu -i -p "Transcoding"
+}
