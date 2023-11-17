@@ -124,10 +124,17 @@ _get_supported_args() {
   while IFS= read -r sub_stream; do
     stream_index=$(echo "$sub_stream" | jq -r ".index")
     codec_args+=("-map 0:${stream_index}")
+
+    # If there's no disposition arg and forced sub, reset disposition
+    if ! [[ "${codec_arg[@]}" =~ "-disposition 0" ]]; then
+     forced_sub=$(echo "$sub_stream" | jq -r ".disposition.forced")
+      [ "$forced_sub" -ne 0 ] && codec_args+=("-disposition 0")
+    fi
+
   done < <(echo "$supported_streams" | jq -c ".[]")
 
   # Remove "forced disposition" from all subtitles
-  echo "-disposition 0 ${codec_args[@]} -c:s copy"
+  echo "${codec_args[@]} -c:s copy"
 }
 
 
