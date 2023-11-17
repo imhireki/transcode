@@ -170,7 +170,7 @@ _get_unsupported_args() {
   max_bytes_sub=$(printf "%s\n" "${sorted_sub_with_bytes[@]}"\
       | awk 'NR == 1 {print $1}')
 
-  overlay_filter_args=("-filter_complex" "[0:v:0][0:${stream_index}]overlay[v]"
+  overlay_filter_args=("-filter_complex" "[0:v:0][0:${max_bytes_sub}]overlay[v]"
                        "-map" "[v]")
   echo "${overlay_filter_args[@]}"
 }
