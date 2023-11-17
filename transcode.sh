@@ -116,7 +116,7 @@ _split_streams_by_compatibility() {
 }
 
 
-_get_supported_args() {
+_get_supported_sub_args() {
   supported_streams="$1"
   codec_args=()
 
@@ -138,7 +138,7 @@ _get_supported_args() {
 }
 
 
-_get_unsupported_args() {
+_get_unsupported_sub_args() {
   unsupported_streams="$1"
   media="$2"
 
@@ -185,12 +185,12 @@ get_subtitle_arguments() {
 
   # There's supported streams (echo its args)
   supported_streams=$(echo "$split_streams" | jq -c ".supported")
-  supported_args=$(_get_supported_args "$supported_streams")
+  supported_args=$(_get_supported_sub_args "$supported_streams")
   [ -n "$supported_args" ] && echo "${supported_args[@]}" && return
 
   # There's ONLY unsupported streams (echo args for the dialogue)
   unsupported_streams=$(echo "$split_streams" | jq -c ".unsupported")
-  unsupported_args=$(_get_unsupported_args "$unsupported_streams" "$media")
+  unsupported_args=$(_get_unsupported_sub_args "$unsupported_streams" "$media")
   [ -n "$unsupported_args" ] && echo "$unsupported_args" && return
 }
 
