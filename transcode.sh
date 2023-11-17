@@ -222,25 +222,31 @@ transcode() {
 
   video_arguments=$(get_video_arguments "$streams")
   subtitle_arguments=$(get_subtitle_arguments "$streams" "$media")
+  audio_arguments=$(get_audio_arguments "$streams")
 
   if [[ "$subtitle_arguments[@]" =~ (filter_complex) ]]; then
     video_stream_index=$(echo "$video_arguments" | grep -Po "(?<=-map 0:)\d+")
 
     # Remove mapping and set a codec with video options
-    video_arguments="-c:${video_stream_index} h264_nvenc -profile:v high\
-    -pix_fmt yuv420p -preset fast"
+    video_arguments="-c:${video_stream_index} h264_nvenc -profile:v high \
+-pix_fmt yuv420p -preset fast"
 
     # Replace [0:v:0] with the actual stream index [0:video_stream_index]
     subtitle_arguments[1]=$(echo "${subtitle_arguments[1]}"\
       | sed "s/\[0:v:0\]/\[0:${video_stream_index}\]/g")
+
+    # Argument order to burn sub
+    arguments=($video_arguments ${subtitle_arguments[@]} $audio_arguments)
+
+  else
+    # Argument order to copy sub
+    arguments=($video_arguments $audio_arguments ${subtitle_arguments[@]})
   fi
 
-  audio_arguments=$(get_audio_arguments "$streams")
   output_filename=$(get_output_filename "$media" "$to_directory")
 
-  ffmpeg -v quiet -stats -hide_banner -nostdin -i "$media" $video_arguments \
-    ${subtitle_arguments[@]} $audio_arguments "$output_filename" \
-    2>> /tmp/transcode_stats
+  ffmpeg -v quiet -stats -hide_banner -nostdin -i "$media" \
+    ${arguments[@]} "$output_filename" 2>> /tmp/transcode_stats
 }
 
 
