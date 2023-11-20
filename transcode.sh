@@ -1,27 +1,5 @@
 #!/usr/bin/bash
 
-list_directories() {
-  base_dir="$1"
-
-  while true; do
-    selected_dir=$(find "$base_dir" -maxdepth 1 -type d | dmenu)
-
-    # Nothing selected
-    if [ -z "$selected_dir" ]; then
-      break
-    # Nested dir selected
-    elif [ "$base_dir" != "$selected_dir" ]; then
-      base_dir="$selected_dir"
-
-    # Dir confirmed
-    else
-      echo "$selected_dir"
-      break
-    fi
-  done
-}
-
-
 filter_streams_by_type() { 
   streams="$1"
   target_type="$2"
