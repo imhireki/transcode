@@ -86,7 +86,6 @@ get_video_arguments() {
              "-profile:v high -pix_fmt yuv420p -preset fast"
       else
         echo "-map 0:${stream_index} -c:${stream_index} copy"
-
       fi
 
       break  # Real (not cover) stream's been found (stop the loop)
@@ -96,7 +95,7 @@ get_video_arguments() {
 }
 
 
-_split_streams_by_compatibility() {
+_split_sub_streams_by_compatibility() {
   streams="$1"
   split_streams='{"supported": [],"unsupported": []}'
 
@@ -133,7 +132,6 @@ _get_supported_sub_args() {
 
   done < <(echo "$supported_streams" | jq -c ".[]")
 
-  # Remove "forced disposition" from all subtitles
   echo "${codec_args[@]} -c:s copy"
 }
 
@@ -181,7 +179,7 @@ get_subtitle_arguments() {
   media="$2"
 
   sub_streams=$(filter_streams_by_type "$streams" "subtitle")
-  split_streams=$(_split_streams_by_compatibility "$sub_streams")
+  split_streams=$(_split_sub_streams_by_compatibility "$sub_streams")
 
   # There's supported streams (echo its args)
   supported_streams=$(echo "$split_streams" | jq -c ".supported")
@@ -237,7 +235,6 @@ transcode() {
 
     # Argument order to burn sub
     arguments=($video_arguments ${subtitle_arguments[@]} $audio_arguments)
-
   else
     # Argument order to copy sub
     arguments=($video_arguments $audio_arguments ${subtitle_arguments[@]})
