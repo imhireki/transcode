@@ -222,6 +222,12 @@ transcode() {
   subtitle_arguments=$(get_subtitle_arguments "$streams" "$media")
   audio_arguments=$(get_audio_arguments "$streams")
 
+  # There's no actions to be performed, return.
+  ! [[ "$video_arguments" =~ (h264) ]] \
+    && ! [[ "$audio_arguments" =~ (aac) ]] \
+    && ! [[ "$subtitle_arguments" =~ (filter_complex|disposition) ]] \
+    && return
+
   if [[ "$subtitle_arguments[@]" =~ (filter_complex) ]]; then
     video_stream_index=$(echo "$video_arguments" | grep -Po "(?<=-map 0:)\d+")
 
