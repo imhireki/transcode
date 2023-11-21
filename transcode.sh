@@ -243,6 +243,16 @@ transcode_directory() {
 }
 
 
+transcode_file() {
+  media="$1"
+  to_directory="$2"
+
+  streams=$(ffprobe -v quiet -show_streams -print_format json \
+            "$media" | jq -c ".streams[]")
+  transcode "$streams" "$media" "$to_directory"
+}
+
+
 get_directory_progress() {
   media="$1"
   to_directory="$2"
