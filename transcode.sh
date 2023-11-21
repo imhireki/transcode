@@ -307,3 +307,15 @@ show_progress() {
 
   echo -e "${directory_progress}\n${stats}" | rofi -dmenu -i -p "Transcoding"
 }
+
+
+input="$1"
+to_directory="/mnt/hd/transcoded"
+
+# Directory
+if [ -d "$input" ]; then
+  transcode_directory "$input" "$to_directory"
+# File
+elif [ -f "$input" ]; then
+  transcode_file "$input" "$to_directory"
+fi
