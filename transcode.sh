@@ -177,10 +177,10 @@ get_output_filename() {
 
   # Make the input directory in the output directory
   media_base_dir=$(awk -F "/" '{print $(NF-1)}' <<< "$media")
-  mkdir -p "${to_directory}/${media_base_dir}/"
+  mkdir -p "${to_directory}${media_base_dir}/"
 
   filename=$(basename "$media")
-  output="${to_directory}/${media_base_dir}/${filename}"
+  output="${to_directory}${media_base_dir}/${filename}"
 
   format_name=$(ffprobe -v quiet -show_entries format=format_name \
      -print_format json "$media"| jq -r ".format.format_name")
@@ -306,18 +306,18 @@ export_working_dirs() {
 
   from_dir_basename=$(basename "$from_dir")
   export TRANSCODE_INPUT_DIR="$from_dir"
-  export TRANSCODE_OUTPUT_DIR="${to_dir}/${from_dir_basename}"
+  export TRANSCODE_OUTPUT_DIR="${to_dir}${from_dir_basename}/"
 }
 
 
-input="${1%/}"  # Remove trailing slash
-to_directory="/mnt/hd/transcoded"
-
+input="$1"
+to_directory="/mnt/hd/transcoded/"
 
 # Directory
 if [ -d "$input" ]; then
-  export_working_dirs "$input" "$to_directory"
-  transcode_directory "$input" "$to_directory"
+  from_directory="${input%/}/"  # Add trailing slash
+  export_working_dirs "$from_directory" "$to_directory"
+  transcode_directory "$from_directory" "$to_directory"
   unset TRANSCODE_INPUT_DIR TRANSCODE_OUTPUT_DIR
 # File
 elif [ -f "$input" ]; then
