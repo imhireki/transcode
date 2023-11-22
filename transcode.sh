@@ -309,12 +309,25 @@ show_progress() {
 }
 
 
-input="$1"
+export_working_dirs() {
+  from_dir="$1"
+  to_dir="$2"
+
+  from_dir_basename=$(basename "$from_dir")
+  export TRANSCODE_INPUT_DIR="$from_dir"
+  export TRANSCODE_OUTPUT_DIR="${to_dir}/${from_dir_basename}"
+}
+
+
+input="${1%/}"  # Remove trailing slash
 to_directory="/mnt/hd/transcoded"
+
 
 # Directory
 if [ -d "$input" ]; then
+  export_working_dirs "$input" "$to_directory"
   transcode_directory "$input" "$to_directory"
+  unset TRANSCODE_INPUT_DIR TRANSCODE_OUTPUT_DIR
 # File
 elif [ -f "$input" ]; then
   transcode_file "$input" "$to_directory"
