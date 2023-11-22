@@ -176,11 +176,11 @@ get_output_filename() {
   to_directory="$2"
 
   # Make the input directory in the output directory
-  last_input_directory=$(awk -F "/" '{print $(NF-1)}' <<< "$media")
-  mkdir -p "${to_directory}/${last_input_directory}/"
+  media_base_dir=$(awk -F "/" '{print $(NF-1)}' <<< "$media")
+  mkdir -p "${to_directory}/${media_base_dir}/"
 
-  input_without_directories=$(awk -F "/" '{print $NF}' <<< "$media")
-  output="${to_directory}/${last_input_directory}/${input_without_directories}"
+  filename=$(basename "$media")
+  output="${to_directory}/${media_base_dir}/${filename}"
 
   format_name=$(ffprobe -v quiet -show_entries format=format_name \
      -print_format json "$media"| jq -r ".format.format_name")
