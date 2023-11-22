@@ -254,21 +254,14 @@ transcode_file() {
 
 
 get_directory_progress() {
-  media="$1"
-  to_directory="$2"
+  # Return if env directories aren't present
+  ! [ -d "$TRANSCODE_INPUT_DIR" ] || ! [ -d "$TRANSCODE_OUTPUT_DIR" ] && return
 
-  # input directory length
-  input_dirname=$(dirname "$media")
-  num_input_files=$(find "${input_dirname}/" -maxdepth 1 -type f | wc -l)
-
-  # Output directory length
-  last_input_directory=$(awk -F "/" '{print $(NF-1)}' <<< "$media")
-  num_output_files=$(find "${to_directory}/${last_input_directory}/" \
-    -maxdepth 1 -type f | wc -l)
+  num_input_files=$(find "$TRANSCODE_INPUT_DIR" -maxdepth 1 -type f | wc -l)
+  num_output_files=$(find "$TRANSCODE_OUTPUT_DIR" -maxdepth 1 -type f | wc -l)
 
   percentage=$(( (num_output_files * 100) / num_input_files))
-
-  echo "files ${num_output_files}/${num_input_files} (${percentage}%)"
+  echo "files ${num_output_files}/${num_input_files} (${percentage}%)\n"
 }
 
 
@@ -300,12 +293,10 @@ get_stats() {
 
 show_progress() {
   media="$1"
-  to_directory="$2"
 
+  directory_progress=$(get_directory_progress)
   stats=$(get_stats "$media")
-  directory_progress=$(get_directory_progress "$media" "$to_directory")
-
-  echo -e "${directory_progress}\n${stats}" | rofi -dmenu -i -p "Transcoding"
+  echo -e "${directory_progress}${stats}" | rofi -dmenu -i -p "Transcoding"
 }
 
 
