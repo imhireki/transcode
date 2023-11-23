@@ -307,6 +307,19 @@ export_working_dirs() {
   from_dir_basename=$(basename "$from_dir")
   export TRANSCODE_INPUT_DIR="$from_dir"
   export TRANSCODE_OUTPUT_DIR="${to_dir}${from_dir_basename}/"
+
+
+add_filename_to_json() {
+  filename="$1"
+
+  if [ -f /tmp/transcode_data.json ]; then
+    object=$(/bin/cat /tmp/transcode_data.json \
+      | jq --arg filename "$filename" '.FILENAME= $filename')
+  else
+    object=$(jq -n --arg filename "$filename" '{"FILENAME":$filename}')
+  fi
+
+  echo "$object" > "/tmp/transcode_data.json"
 }
 
 
