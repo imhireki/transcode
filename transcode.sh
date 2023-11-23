@@ -196,6 +196,8 @@ transcode() {
   media="$2"
   to_directory="$3"
 
+  add_filename_to_json "$media"
+
   video_arguments=$(get_video_arguments "$streams")
   subtitle_arguments=$(get_subtitle_arguments "$streams" "$media")
   audio_arguments=$(get_audio_arguments "$streams")
@@ -228,6 +230,8 @@ transcode() {
 
   ffmpeg -v quiet -stats -hide_banner -nostdin -i "$media" \
     ${arguments[@]} "$output_filename" 2>> /tmp/transcode_stats
+
+  rm /tmp/transcode_stats
 }
 
 
@@ -254,11 +258,15 @@ transcode_file() {
 
 
 get_directory_progress() {
-  # Return if env directories aren't present
-  ! [ -d "$TRANSCODE_INPUT_DIR" ] || ! [ -d "$TRANSCODE_OUTPUT_DIR" ] && return
+  INPUT_DIR=$(jq -r ".INPUT_DIR" /tmp/transcode_data.json 2> /dev/null)
+  OUTPUT_DIR=$(jq -r ".OUTPUT_DIR" /tmp/transcode_data.json 2> /dev/null)
 
-  num_input_files=$(find "$TRANSCODE_INPUT_DIR" -maxdepth 1 -type f | wc -l)
-  num_output_files=$(find "$TRANSCODE_OUTPUT_DIR" -maxdepth 1 -type f | wc -l)
+  # Return if env directories aren't present
+  ! [ -d "$INPUT_DIR" ] || ! [ -d "$OUTPUT_DIR" ] && return
+
+  num_input_files=$(find "$INPUT_DIR" -maxdepth 1 -type f | wc -l)
+  num_output_files=$(find "$OUTPUT_DIR" -maxdepth 1 -type f | wc -l)
+  ((num_output_files--))  # Take 1 to start at 0
 
   percentage=$(( (num_output_files * 100) / num_input_files))
   echo "files ${num_output_files}/${num_input_files} (${percentage}%)\n"
@@ -277,9 +285,9 @@ _get_raw_stats() {
 
 
 get_stats() {
-  media="$1"
+  FILENAME=$(jq -r ".FILENAME" /tmp/transcode_data.json 2> /dev/null)
 
-  stats=$(awk -F "\r" '{print $NF }' < /tmp/transcode_stats)
+  stats=$(_get_raw_stats) || return 1
 
   frame=$(echo "$stats" | grep -Po "frame=\s*\d+" | grep -Po "\d+")
   fps=$(echo "$stats" | grep -Po "fps=\s*\d+" | grep -Po "\d+")
@@ -289,7 +297,7 @@ get_stats() {
   speed=$(echo "$stats" | grep -Po "speed=\s*\S+" | grep -Po "(?<=[= ])\S+")
 
   duration=$(ffprobe -v error -show_entries format=duration \
-             -of default=nw=1:nk=1 "$media" | cut -d. -f1)
+             -of default=nw=1:nk=1 "$FILENAME" | cut -d. -f1)
 
   # Convert to seconds
   time=$(echo "$time" | awk -F: '{ print ($1 * 3600) + ($2 * 60) + $3 }' | cut -d. -f1)
@@ -303,10 +311,8 @@ get_stats() {
 
 
 show_progress() {
-  media="$1"
-
   directory_progress=$(get_directory_progress)
-  stats=$(get_stats "$media")
+  stats=$(get_stats) || return
   echo -e "${directory_progress}${stats}" | rofi -dmenu -i -p "Transcoding"
 }
 
@@ -349,9 +355,8 @@ to_directory="/mnt/hd/transcoded/"
 # Directory
 if [ -d "$input" ]; then
   from_directory="${input%/}/"  # Add trailing slash
-  export_working_dirs "$from_directory" "$to_directory"
+  save_working_dirs_to_json "$from_directory" "$to_directory"
   transcode_directory "$from_directory" "$to_directory"
-  unset TRANSCODE_INPUT_DIR TRANSCODE_OUTPUT_DIR
 # File
 elif [ -f "$input" ]; then
   transcode_file "$input" "$to_directory"
