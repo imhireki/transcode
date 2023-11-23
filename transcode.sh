@@ -265,6 +265,17 @@ get_directory_progress() {
 }
 
 
+_get_raw_stats() {
+  # Wait 3s for the stats
+  counter=0
+  while ! [ -e /tmp/transcode_stats ]; do
+    sleep 1 &&  ((counter++))
+    [ "$counter" -gt 2 ] && return 1  # Return when the time runs out
+  done
+  echo $(awk -F"\r" '{ print $(NF-1) }' < /tmp/transcode_stats)
+}
+
+
 get_stats() {
   media="$1"
 
