@@ -300,13 +300,22 @@ show_progress() {
 }
 
 
-export_working_dirs() {
+save_working_dirs_to_json() {
   from_dir="$1"
   to_dir="$2"
 
   from_dir_basename=$(basename "$from_dir")
-  export TRANSCODE_INPUT_DIR="$from_dir"
-  export TRANSCODE_OUTPUT_DIR="${to_dir}${from_dir_basename}/"
+
+  input_dir="$from_dir"
+  output_dir="${to_dir}${from_dir_basename}/"
+
+  object=$(jq -n \
+    --arg input_dir "$input_dir" \
+    --arg output_dir "$output_dir" \
+    '{ "INPUT_DIR": $input_dir, "OUTPUT_DIR": $output_dir }'
+  )
+  echo "$object" > /tmp/transcode_data.json
+}
 
 
 add_filename_to_json() {
