@@ -110,36 +110,7 @@ control_download() {
 }
 
 
-start_clipboard_magnet() {
-  # Start transmission-daemon
-  if ! pidof transmission-daemon > /dev/null; then
-    transmission-daemon
-    # Wait for the daemon to start
-    while ! pidof transmission-daemon > /dev/null; do
-      sleep 1
-    done
-  fi
-
-  # Wait for the daemon to be able to add magnet
-  sleep 1
-
-  # Start magnet from the clipboard
-  transmission-remote -a "$(xclip -o -selection clipboard)" -s
-
-  # Clean clipboard
-  cat /dev/null | xclip -selection clipboard
-}
-
-
-# Start magnet
-if [[ $(xclip -o -selection clipboard 2> /dev/null) == "magnet:?"* ]]; then
-  start_clipboard_magnet &
-# Open menu
-else
-  downloads=$(get_downloads)
-  selected_download=$(list_download_titles "$downloads")
-  get_download_details "$selected_download"
-  control_download "$selected_download"
-fi
-
-
+downloads=$(get_downloads)
+selected_download=$(list_download_titles "$downloads")
+get_download_details "$selected_download"
+control_download "$selected_download"
