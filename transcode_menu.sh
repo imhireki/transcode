@@ -17,11 +17,11 @@ get_directory_progress() {
 
 
 _get_raw_stats() {
-  # Wait 3s for the stats
-  counter=0
+  # Wait 3s max for the stats
+  sleep_counter=0
   while ! [ -e /tmp/transcode_stats ]; do
-    sleep 1 &&  ((counter++))
-    [ "$counter" -gt 2 ] && return 1  # Return when the time runs out
+    [ "$sleep_counter" -gt 2 ] && return 1 # Return when the time runs out
+    sleep 1 && ((sleep_counter++))
   done
   echo $(awk -F"\r" '{ print $(NF-1) }' < /tmp/transcode_stats)
 }
@@ -55,7 +55,7 @@ get_stats() {
 
 show_progress() {
   directory_progress=$(get_directory_progress)
-  stats=$(get_stats) || return
+  stats=$(get_stats) || return 1
   echo -e "${directory_progress}${stats}" | rofi -dmenu -i -p "Transcoding"
 }
 
