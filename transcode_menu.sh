@@ -9,10 +9,12 @@ get_directory_progress() {
 
   num_input_files=$(find "$INPUT_DIR" -maxdepth 1 -type f | wc -l)
   num_output_files=$(find "$OUTPUT_DIR" -maxdepth 1 -type f | wc -l)
-  ((num_output_files--))  # Take 1 to start at 0
+
+  # Take away 1 to show the number of files done.
+  [ $num_output_files -gt 0 ] && ((num_output_files--))
 
   percentage=$(( (num_output_files * 100) / num_input_files))
-  echo "files ${num_output_files}/${num_input_files} (${percentage}%)\n"
+  echo "files done ${num_output_files}/${num_input_files} (${percentage}%)\n"
 }
 
 
