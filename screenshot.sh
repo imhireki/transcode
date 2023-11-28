@@ -6,7 +6,7 @@ function store_screenshot() {
 }
 
 case $1 in
-    select) maim -s -d 1 | store_screenshot;; 
+    area) maim -s -d 1 | store_screenshot;; 
     screen) maim -d 1 | store_screenshot;;
 esac
 
