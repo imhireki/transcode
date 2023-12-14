@@ -1,3 +1,0 @@
-#!/usr/bin/bash
-
-echo mem > /sys/power/state
