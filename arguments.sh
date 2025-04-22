@@ -5,7 +5,6 @@ source ./utils.sh
 get_audio_arguments() {
   streams="$1"
 
-  audio_streams=$(filter_streams_by_type "$streams" "audio")
   codec_args=()
 
   while IFS= read -r stream; do
@@ -17,8 +16,7 @@ get_audio_arguments() {
     else
       codec_args+=("-map 0:${stream_index} -c:${stream_index} aac")
     fi
-
-  done < <(echo "$audio_streams" | jq -c ".[]")
+  done < <(list_streams_by_type "$media" "a")
 
   echo "${codec_args[@]}"
 }
@@ -26,49 +24,42 @@ get_audio_arguments() {
 get_video_arguments() {
   streams="$1"
 
-  # Can include the cover
-  video_streams=$(filter_streams_by_type "$streams" "video")
-
   while IFS= read -r stream; do
     codec_name=$(echo "$stream" | jq -r ".codec_name")
 
-    # Not a cover
-    if ! [[ "$codec_name" =~ (jpeg|png|webp) ]]; then
+    # Skip cover and remove it (since it will not be mapped)
+    [[ "$codec_name" =~ (jpeg|png|webp) ]] && return
 
-      profile=$(echo "$stream" | jq -r ".profile")
-      stream_index=$(echo "$stream" | jq -r ".index")
+    profile=$(echo "$stream" | jq -r ".profile")
+    stream_index=$(echo "$stream" | jq -r ".index")
 
-      # Not h264 or h264 without High profile (transcode)
-      if [ "$codec_name" != "h264" ] || [ "$profile" != "High" ]; then
-        echo "-map 0:${stream_index} -c:${stream_index} h264" \
-             "-profile:v high -pix_fmt yuv420p -preset fast"
-      else
-        echo "-map 0:${stream_index} -c:${stream_index} copy"
-      fi
-
-      break  # Real (not cover) stream's been found (stop the loop)
+    # Not h264 or h264 without High profile (transcode)
+    if [[ "$codec_name" != "h264" ]] || [[ "$profile" != "High" ]]; then
+      echo "-map 0:${stream_index} -c:${stream_index} h264" \
+           "-profile:v high -pix_fmt yuv420p -preset fast"
+    else
+      echo "-map 0:${stream_index} -c:${stream_index} copy"
     fi
-  done < <(echo "$video_streams" | jq -c ".[]")
-
+  done < <(list_streams_by_type "$media" "v")
 }
 
-_split_sub_streams_by_compatibility() {
-  streams="$1"
-  split_streams='{"supported": [],"unsupported": []}'
+group_subs_by_compatibility() {
+  media="$1"
+  groups='{"supported": [],"unsupported": []}'
 
   while IFS= read -r stream; do
     codec_name=$(echo "$stream" | jq -r ".codec_name")
 
     if [[ "$codec_name" =~ ^(ass|subrip)$ ]]; then
-      split_streams=$(echo "$split_streams" | jq --argjson stream \
-                      "$stream" ".supported += [$stream]")
+      groups=$(echo "$groups" | jq --argjson stream \
+        "$stream" ".supported += [$stream]")
     else
-      split_streams=$(echo "$split_streams" | jq --argjson stream \
-                      "$stream" ".unsupported += [$stream]")
+      groups=$(echo "$groups" | jq --argjson stream \
+        "$stream" ".unsupported += [$stream]")
     fi
-  done < <(echo "$streams" | jq -c ".[]")
+  done < <(list_streams_by_type "$media" "s")
 
-  echo "$split_streams"
+  echo "$groups"
 }
 
 _get_supported_sub_args() {
@@ -81,12 +72,11 @@ _get_supported_sub_args() {
     codec_args+=("-map 0:${stream_index}")
 
     # If there's no disposition arg and forced sub, reset disposition
-    if ! [[ "${codec_arg[@]}" =~ "-disposition 0" ]]; then
+    if ! [[ "${codec_args[@]}" =~ "-disposition 0" ]]; then
      forced_sub=$(echo "$sub_stream" | jq -r ".disposition.forced")
       [ "$forced_sub" -ne 0 ] && codec_args+=("-disposition 0")
     fi
-
-  done < <(echo "$supported_streams" | jq -c ".[]")
+  done <<< "$supported_streams"
 
   echo "${codec_args[@]} -c:s copy"
 }
@@ -113,8 +103,7 @@ _get_unsupported_sub_args() {
     fi
 
     sub_with_bytes+=("${stream_index} ${num_bytes}")
-
-  done < <(echo "$unsupported_streams" | jq -c ".[]")
+  done <<< "$unsupported_streams"
 
   # Sort by num of bytes
   readarray -t sorted_sub_with_bytes < \
@@ -129,19 +118,17 @@ _get_unsupported_sub_args() {
 }
 
 get_subtitle_arguments() {
-  streams="$1"
-  media="$2"
+  media="$1"
 
-  sub_streams=$(filter_streams_by_type "$streams" "subtitle")
-  split_streams=$(_split_sub_streams_by_compatibility "$sub_streams")
+  streams=$(group_subs_by_compatibility "$media")
 
   # There's supported streams (echo its args)
-  supported_streams=$(echo "$split_streams" | jq -c ".supported")
+  supported_streams=$(echo "$streams" | jq -c ".supported[]")
   supported_args=$(_get_supported_sub_args "$supported_streams")
   [ -n "$supported_args" ] && echo "${supported_args[@]}" && return
 
   # There's ONLY unsupported streams (echo args for the dialogue)
-  unsupported_streams=$(echo "$split_streams" | jq -c ".unsupported")
+  unsupported_streams=$(echo "$streams" | jq -c ".unsupported[]")
   unsupported_args=$(_get_unsupported_sub_args "$unsupported_streams" "$media")
   [ -n "$unsupported_args" ] && echo "$unsupported_args" && return
 }
