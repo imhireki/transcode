@@ -10,26 +10,6 @@ list_streams_by_type() {
     -print_format json "$media" | jq -c ".streams[]"
 }
 
-filter_streams_by_type() { 
-  streams="$1"
-  target_type="$2"
-
-  streams_array="[]"
-
-  # Iterate over the json streams
-  while IFS= read -r stream; do
-    codec_type=$(echo "$stream" | jq -r ".codec_type")
-
-    # Append to streams_array the target stream
-    if [ "$codec_type" == "$target_type" ]; then
-      streams_array=$(echo "$streams_array" \
-        | jq --argjson streams "$stream" ". + [$stream]")
-    fi
-  done < <(echo "$streams")
-
-  echo "$streams_array"
-}
-
 get_output_filename() {
   media="$1"
   to_directory="$2"
