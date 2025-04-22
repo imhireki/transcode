@@ -1,5 +1,15 @@
 #!/usr/bin/bash
 
+
+list_streams_by_type() {
+  # a: audio, v: video, s: subtitle
+  media="$1"
+  stream_type="$2"
+
+  ffprobe -v quiet -show_streams -select_streams "$stream_type" \
+    -print_format json "$media" | jq -c ".streams[]"
+}
+
 filter_streams_by_type() { 
   streams="$1"
   target_type="$2"
