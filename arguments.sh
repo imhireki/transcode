@@ -64,21 +64,19 @@ group_subs_by_compatibility() {
 
 _get_supported_sub_args() {
   supported_streams="$1"
-  codec_args=()
+  args=()
 
-  # Loop through the subtitle streams
   while IFS= read -r sub_stream; do
     stream_index=$(echo "$sub_stream" | jq -r ".index")
-    codec_args+=("-map 0:${stream_index}")
 
-    # If there's no disposition arg and forced sub, reset disposition
-    if ! [[ "${codec_args[@]}" =~ "-disposition 0" ]]; then
-     forced_sub=$(echo "$sub_stream" | jq -r ".disposition.forced")
-      [ "$forced_sub" -ne 0 ] && codec_args+=("-disposition 0")
-    fi
+    # Map supported stream
+    args+=("-map 0:${stream_index}")
+
+    # Disable forced disposition, known for causing compatibility problems.
+    forced=$(echo "$sub_stream" | jq -r ".disposition.forced")
+    [[ "$forced" -eq 1 ]] && args+=("-disposition:${stream_index} -forced")
   done <<< "$supported_streams"
-
-  echo "${codec_args[@]} -c:s copy"
+  echo "${args[*]} -c:s copy"
 }
 
 _get_unsupported_sub_args() {
