@@ -1,5 +1,13 @@
 #!/usr/bin/bash
 
+match_attribute() {
+  attribute="$1"  # h264
+  supported_values="$2"  # "h264|hevc"
+
+  regex="^(${supported_values})$"
+
+  [[ "$attribute" =~ $regex ]] && return 0 || return 1
+}
 
 list_streams_by_type() {
   # a: audio, v: video, s: subtitle
