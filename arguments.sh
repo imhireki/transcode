@@ -1,24 +1,24 @@
 #!/usr/bin/bash
 
+source ./config.sh
 source ./utils.sh
 
 get_audio_arguments() {
-  streams="$1"
-
-  codec_args=()
+  media="$1"
+  flags=()
 
   while IFS= read -r stream; do
-    codec_name=$(echo "$stream" | jq -r ".codec_name")
-    stream_index=$(echo "$stream" | jq -r ".index")
+    index=$(jq -r ".index" <<< "$stream")
+    codec=$(jq -r ".codec_name" <<< "$stream")
 
-    if [[ "$codec_name" =~ (aac|flac|opus|ac3|mp3) ]]; then
-      codec_args+=("-map 0:${stream_index} -c:${stream_index} copy")
+    if match_attribute "$codec" "$SUPPORTED_AUDIO_CODECS"; then
+      flags+=("-map 0:${index} -c:${index} copy")
     else
-      codec_args+=("-map 0:${stream_index} -c:${stream_index} aac")
+      flags+=("-map 0:${index} -c:${index} ${AUDIO_ENCODING_FLAGS}")
     fi
   done < <(list_streams_by_type "$media" "a")
 
-  echo "${codec_args[@]}"
+  echo "${flags[*]}"
 }
 
 get_video_arguments() {
