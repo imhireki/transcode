@@ -45,17 +45,21 @@ get_video_arguments() {
 
 group_subs_by_compatibility() {
   media="$1"
-  groups='{"supported": [],"unsupported": []}'
+  groups='{"supported": [], "unsupported": []}'
 
   while IFS= read -r stream; do
-    codec_name=$(echo "$stream" | jq -r ".codec_name")
+    codec=$(jq -r ".codec_name" <<< "$stream")
 
-    if [[ "$codec_name" =~ ^(ass|subrip)$ ]]; then
-      groups=$(echo "$groups" | jq --argjson stream \
-        "$stream" ".supported += [$stream]")
+    if match_attribute "$codec" "$SUPPORTED_SUBTITLE_CODECS"; then
+      groups=$(
+          jq --argjson stream "$stream" \
+          ".supported += [$stream]" <<< "$groups"
+      )
     else
-      groups=$(echo "$groups" | jq --argjson stream \
-        "$stream" ".unsupported += [$stream]")
+      groups=$(
+          jq --argjson stream "$stream" \
+          ".unsupported += [$stream]" <<< "$groups"
+      )
     fi
   done < <(list_streams_by_type "$media" "s")
 
