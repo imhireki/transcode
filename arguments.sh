@@ -49,17 +49,12 @@ group_subs_by_compatibility() {
 
   while IFS= read -r stream; do
     codec=$(jq -r ".codec_name" <<< "$stream")
+    index=$(jq -r ".index" <<< "$stream")
 
     if match_attribute "$codec" "$SUPPORTED_SUBTITLE_CODECS"; then
-      groups=$(
-          jq --argjson stream "$stream" \
-          ".supported += [$stream]" <<< "$groups"
-      )
+      groups=$(jq --arg index "$index" '.supported += [$index]' <<< "$groups")
     else
-      groups=$(
-          jq --argjson stream "$stream" \
-          ".unsupported += [$stream]" <<< "$groups"
-      )
+      groups=$(jq --arg index "$index" '.unsupported += [$index]' <<< "$groups")
     fi
   done < <(list_streams_by_type "$media" "s")
 
