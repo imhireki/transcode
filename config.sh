@@ -1,0 +1,7 @@
+UNSUPPORTED_COVERS="mjpeg|png|bmp|jpeg2000|webp|pbm|pgm|ppm"
+SUPPORTED_VIDEO_PROFILES="High"
+SUPPORTED_VIDEO_CODECS="h264"
+SUPPORTED_AUDIO_CODECS="aac|flac|opus|eac3|ac3|mp3"
+SUPPORTED_SUBTITLE_CODECS="ass|subrip"
+VIDEO_ENCODING_FLAGS="h264_nvenc -profile:v high -pix_fmt yuv420p -preset fast"
+AUDIO_ENCODING_FLAGS="aac"
