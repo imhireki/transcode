@@ -9,6 +9,17 @@ match_attribute() {
   [[ "$attribute" =~ $regex ]] && return 0 || return 1
 }
 
+select_stream_by_index() {
+  media="$1"
+  index="$2"
+
+  matching_streams=$(
+    ffprobe -v quiet -show_streams -select_streams \
+      "$index" -print_format json "$media"
+  )
+  jq -c ".streams[]" <<< "$matching_streams"
+}
+
 list_streams_by_type() {
   # a: audio, v: video, s: subtitle
   media="$1"
