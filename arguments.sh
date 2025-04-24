@@ -22,24 +22,24 @@ get_audio_arguments() {
 }
 
 get_video_arguments() {
-  streams="$1"
+  media="$1"
 
   while IFS= read -r stream; do
-    codec_name=$(echo "$stream" | jq -r ".codec_name")
+    codec=$(jq -r ".codec_name" <<< "$stream")
 
-    # Skip cover and remove it (since it will not be mapped)
-    [[ "$codec_name" =~ (jpeg|png|webp) ]] && return
+    # Skip covers
+    match_attribute "$codec" "$UNSUPPORTED_COVERS" && continue
 
-    profile=$(echo "$stream" | jq -r ".profile")
-    stream_index=$(echo "$stream" | jq -r ".index")
+    index=$(jq -r ".index" <<< "$stream")
+    profile=$(jq -r ".profile" <<< "$stream")
 
-    # Not h264 or h264 without High profile (transcode)
-    if [[ "$codec_name" != "h264" ]] || [[ "$profile" != "High" ]]; then
-      echo "-map 0:${stream_index} -c:${stream_index} h264" \
-           "-profile:v high -pix_fmt yuv420p -preset fast"
+    if match_attribute "$codec" "$SUPPORTED_VIDEO_CODECS" && \
+       match_attribute "$profile" "$SUPPORTED_VIDEO_PROFILES"; then
+      echo "-map 0:${index} -c:${index} copy"
     else
-      echo "-map 0:${stream_index} -c:${stream_index} copy"
+      echo "-map 0:${index} -c:${index} ${VIDEO_ENCODING_FLAGS}"
     fi
+
   done < <(list_streams_by_type "$media" "v")
 }
 
