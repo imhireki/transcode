@@ -3,7 +3,7 @@
 source ./config.sh
 source ./utils.sh
 
-get_audio_arguments() {
+make_audio_flags() {
   media="$1"
   flags=()
 
@@ -21,7 +21,7 @@ get_audio_arguments() {
   echo "${flags[*]}"
 }
 
-get_video_arguments() {
+make_video_flags() {
   media="$1"
 
   while IFS= read -r stream; do
@@ -43,25 +43,25 @@ get_video_arguments() {
   done < <(list_streams_by_type "$media" "v")
 }
 
-group_subs_by_compatibility() {
+group_subs_by_format() {
   media="$1"
-  groups='{"supported": [], "unsupported": []}'
+  groups='{"text": [], "image": []}'
 
   while IFS= read -r stream; do
     codec=$(jq -r ".codec_name" <<< "$stream")
     index=$(jq -r ".index" <<< "$stream")
 
     if match_attribute "$codec" "$SUPPORTED_SUBTITLE_CODECS"; then
-      groups=$(jq --arg index "$index" '.supported += [$index]' <<< "$groups")
+      groups=$(jq --arg index "$index" '.text += [$index]' <<< "$groups")
     else
-      groups=$(jq --arg index "$index" '.unsupported += [$index]' <<< "$groups")
+      groups=$(jq --arg index "$index" '.image += [$index]' <<< "$groups")
     fi
   done < <(list_streams_by_type "$media" "s")
 
   echo "$groups"
 }
 
-get_supported_sub_args() {
+make_text_sub_flags() {
   media="$1"
   indexes="$2"
   flags=()
@@ -83,7 +83,7 @@ get_supported_sub_args() {
   echo "${flags[*]}"
 }
 
-get_unsupported_sub_args() {
+make_image_sub_flags() {
   media="$1"
   indexes="$2"
 
@@ -104,9 +104,9 @@ get_unsupported_sub_args() {
     # Write to a temp file to get its size
     if [[ -z "$size" ]]; then
       ffmpeg -nostdin -v quiet -i "$media" -map 0:"$index" \
-        -c copy "$TEMP_GRAPHIC_SUBTITLE_FILE"
-      size=$(stat -c %s "$TEMP_GRAPHIC_SUBTITLE_FILE")
-      rm "$TEMP_GRAPHIC_SUBTITLE_FILE"
+        -c copy "$TEMP_IMAGE_SUBTITLE_FILE"
+      size=$(stat -c %s "$TEMP_IMAGE_SUBTITLE_FILE")
+      rm "$TEMP_IMAGE_SUBTITLE_FILE"
     fi
 
     subs_with_size+=("${index} ${size}")
@@ -129,23 +129,23 @@ get_unsupported_sub_args() {
   echo "${overlay_filter_flags[@]}"
 }
 
-get_subtitle_arguments() {
+make_subtitle_flags() {
   media="$1"
 
-  sub_groups=$(group_subs_by_compatibility "$media")
+  sub_groups=$(group_subs_by_format "$media")
 
-  supported_indexes=$(jq -r ".supported[]" <<< "$sub_groups")
-  supported_flags=$(get_supported_sub_args "$media" "$supported_indexes")
+  text_sub_indexes=$(jq -r ".text[]" <<< "$sub_groups")
+  text_sub_flags=$(make_text_sub_flags "$media" "$text_sub_indexes")
 
-  # There's supported subs
-  [[ -n "$supported_flags" ]] && echo "$supported_flags" && return
+  # Prefer the text-based subs.
+  [[ -n "$text_sub_flags" ]] && echo "$text_sub_flags" && return
 
-  # Return if it's not supposed to burn them
-  [[ $BURN_GRAPHIC_SUBTITLE == true ]] || return
+  # Return if it's not supposed to burn any image-based sub
+  [[ $BURN_IMAGE_SUBTITLE == true ]] || return
 
-  unsupported_indexes=$(jq -r ".unsupported[]" <<< "$sub_groups")
-  unsupported_flags=$(get_unsupported_sub_args "$media" "$unsupported_indexes")
+  image_sub_indexes=$(jq -r ".image[]" <<< "$sub_groups")
+  image_sub_flags=$(make_image_sub_flags "$media" "$image_sub_indexes")
 
-  # There's only unsupported subs
-  [[ -n "$unsupported_flags" ]] && echo "$unsupported_flags"
+  # There's only image-based subs.
+  [[ -n "$image_sub_flags" ]] && echo "$image_sub_flags"
 }

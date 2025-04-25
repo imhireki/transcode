@@ -1,5 +1,5 @@
-BURN_GRAPHIC_SUBTITLE=false
-TEMP_GRAPHIC_SUBTITLE_FILE="/tmp/transcode_sub.mkv"
+BURN_IMAGE_SUBTITLE=true
+TEMP_IMAGE_SUBTITLE_FILE="/tmp/transcode_image_sub.mkv"
 UNSUPPORTED_COVERS="mjpeg|png|bmp|jpeg2000|webp|pbm|pgm|ppm"
 SUPPORTED_VIDEO_PROFILES="High"
 SUPPORTED_VIDEO_CODECS="h264"
