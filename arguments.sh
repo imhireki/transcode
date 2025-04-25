@@ -83,40 +83,50 @@ get_supported_sub_args() {
   echo "${flags[*]}"
 }
 
-_get_unsupported_sub_args() {
-  unsupported_streams="$1"
-  media="$2"
+get_unsupported_sub_args() {
+  media="$1"
+  indexes="$2"
 
-  sub_with_bytes=()
+  subs_with_size=()
 
-  while IFS= read -r sub_stream; do
-    num_bytes=$(echo "$sub_stream" | jq -r ".tags" \
-      | grep -i -Po '".*byte.*": "\d+"' \
-      | grep -Po '(?<=: ")\d+')
+  # The loop would run once, even if the indexes is empty
+  [[ -z "$indexes" ]] && return
 
-    stream_index=$(echo "$sub_stream" | jq -r ".index")
+  while IFS= read -r index; do
+    stream=$(select_stream_by_index "$media" "$index")
 
-    # Write to a tmp file to get its bytes
-    if [ -z "$num_bytes" ]; then
-      ffmpeg -nostdin -v quiet -i "$media" \
-        -map 0:"$stream_index" -c copy  /tmp/transcode_sub.mkv
-      num_bytes=$(stat -c %s /tmp/transcode_sub.mkv)
-      rm /tmp/transcode_sub.mkv
+    size=$(
+      echo "$stream" | jq -r ".tags" |
+        grep -i -Po '".*byte.*": "\d+"' |
+        grep -Po '(?<=: ")\d+'
+    )
+
+    # Write to a temp file to get its size
+    if [[ -z "$size" ]]; then
+      ffmpeg -nostdin -v quiet -i "$media" -map 0:"$index" \
+        -c copy "$TEMP_GRAPHIC_SUBTITLE_FILE"
+      size=$(stat -c %s "$TEMP_GRAPHIC_SUBTITLE_FILE")
+      rm "$TEMP_GRAPHIC_SUBTITLE_FILE"
     fi
 
-    sub_with_bytes+=("${stream_index} ${num_bytes}")
-  done <<< "$unsupported_streams"
+    subs_with_size+=("${index} ${size}")
 
-  # Sort by num of bytes
-  readarray -t sorted_sub_with_bytes < \
-      <(printf "%s\n" "${sub_with_bytes[@]}" | sort -k2,2nr)
+  done <<< "$indexes"
 
-  max_bytes_sub=$(printf "%s\n" "${sorted_sub_with_bytes[@]}"\
-      | awk 'NR == 1 {print $1}')
+  # Sort by biggest size
+  readarray -t sorted_subs_with_size < <(
+    printf "%s\n" "${subs_with_size[@]}" | sort -k2 -rn
+  )
 
-  overlay_filter_args=("-filter_complex" "[0:v:0][0:${max_bytes_sub}]overlay[v]"
-                       "-map" "[v]")
-  echo "${overlay_filter_args[@]}"
+  max_size_sub_index=$(
+    echo "${sorted_subs_with_size[*]}" | head -n 1 | cut -d" " -f 1
+  )
+
+  overlay_filter_flags=(
+    "-filter_complex [0:v:0][0:${max_size_sub_index}]overlay[v]"
+    "-map [v]"
+  )
+  echo "${overlay_filter_flags[@]}"
 }
 
 get_subtitle_arguments() {
