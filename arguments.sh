@@ -132,15 +132,20 @@ get_unsupported_sub_args() {
 get_subtitle_arguments() {
   media="$1"
 
-  streams=$(group_subs_by_compatibility "$media")
+  sub_groups=$(group_subs_by_compatibility "$media")
 
-  # There's supported streams (echo its args)
-  supported_streams=$(echo "$streams" | jq -c ".supported[]")
-  supported_args=$(_get_supported_sub_args "$supported_streams")
-  [ -n "$supported_args" ] && echo "${supported_args[@]}" && return
+  supported_indexes=$(jq -r ".supported[]" <<< "$sub_groups")
+  supported_flags=$(get_supported_sub_args "$media" "$supported_indexes")
 
-  # There's ONLY unsupported streams (echo args for the dialogue)
-  unsupported_streams=$(echo "$streams" | jq -c ".unsupported[]")
-  unsupported_args=$(_get_unsupported_sub_args "$unsupported_streams" "$media")
-  [ -n "$unsupported_args" ] && echo "$unsupported_args" && return
+  # There's supported subs
+  [[ -n "$supported_flags" ]] && echo "$supported_flags" && return
+
+  # Return if it's not supposed to burn them
+  [[ $BURN_GRAPHIC_SUBTITLE == true ]] || return
+
+  unsupported_indexes=$(jq -r ".unsupported[]" <<< "$sub_groups")
+  unsupported_flags=$(get_unsupported_sub_args "$media" "$unsupported_indexes")
+
+  # There's only unsupported subs
+  [[ -n "$unsupported_flags" ]] && echo "$unsupported_flags"
 }
