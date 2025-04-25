@@ -61,21 +61,26 @@ group_subs_by_compatibility() {
   echo "$groups"
 }
 
-_get_supported_sub_args() {
-  supported_streams="$1"
-  args=()
+get_supported_sub_args() {
+  media="$1"
+  indexes="$2"
+  flags=()
 
-  while IFS= read -r sub_stream; do
-    stream_index=$(echo "$sub_stream" | jq -r ".index")
+  # The loop would run once, even if the indexes is empty
+  [[ -z "$indexes" ]] && return
 
-    # Map supported stream
-    args+=("-map 0:${stream_index}")
+  while IFS= read -r index; do
+    stream=$(select_stream_by_index "$media" "$index")
 
-    # Disable forced disposition, known for causing compatibility problems.
-    forced=$(echo "$sub_stream" | jq -r ".disposition.forced")
-    [[ "$forced" -eq 1 ]] && args+=("-disposition:${stream_index} -forced")
-  done <<< "$supported_streams"
-  echo "${args[*]} -c:s copy"
+    flags+=("-map 0:${index} -c:${index} copy")
+
+    # Remove forced disposition from the sub
+    forced=$(jq -r ".disposition.forced" <<< "$stream")
+    [[ "$forced" ==  "1" ]] && flags+=("-disposition:${index} -forced")
+
+  done <<< "$indexes"
+
+  echo "${flags[*]}"
 }
 
 _get_unsupported_sub_args() {
