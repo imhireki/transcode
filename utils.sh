@@ -32,6 +32,11 @@ update_state() {
   echo "$new_state" > "$STATE"
 }
 
+cleanup() {
+  [[ -f "$STATE" ]] && rm "$STATE"
+  [[ -f "$PROGRESS" ]] && rm "$PROGRESS"
+}
+
 match_attribute() {
   attribute="$1"  # h264
   supported_values="$2"  # "h264|hevc"
