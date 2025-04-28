@@ -1,5 +1,15 @@
 #!/usr/bin/bash
 
+has_pending_operations() {
+  if [[ $(jq ".transcoding.video" "$STATE") == false ]] &&
+     [[ $(jq ".transcoding.audio" "$STATE") == false ]] &&
+     [[ $(jq ".transcoding.subtitle" "$STATE") == false ]]; then
+    return 1
+  else
+    return 0
+  fi
+}
+
 match_attribute() {
   attribute="$1"  # h264
   supported_values="$2"  # "h264|hevc"
