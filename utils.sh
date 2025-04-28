@@ -10,6 +10,10 @@ has_pending_operations() {
   fi
 }
 
+is_burning_sub() {
+  [[ $(jq ".burning_sub" "$STATE") == true  ]] && return 0 || return 1
+}
+
 match_attribute() {
   attribute="$1"  # h264
   supported_values="$2"  # "h264|hevc"
