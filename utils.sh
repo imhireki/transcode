@@ -14,6 +14,24 @@ is_burning_sub() {
   [[ $(jq ".burning_sub" "$STATE") == true  ]] && return 0 || return 1
 }
 
+initialize_state() {
+  cp "state_blueprint.json" "$STATE"
+}
+
+update_state() {
+  key="$1"  # .transcoding.video
+  value="$2"
+
+  # value matches state's value
+  [[ $(jq "$key" "$STATE") == "$value" ]] && return
+
+  # pass value as json, so booleans are not quoted
+  # pass key directly, so it can use nested keys (.a.b)
+  new_state=$(jq --argjson value "$value" "($key) = \$value" "$STATE")
+
+  echo "$new_state" > "$STATE"
+}
+
 match_attribute() {
   attribute="$1"  # h264
   supported_values="$2"  # "h264|hevc"
