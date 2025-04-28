@@ -1,3 +1,5 @@
+STATE="/tmp/transcode_state_${$}.json"
+PROGRESS="/tmp/transcode_progress_${$}.log"
 BURN_IMAGE_SUBTITLE=true
 TEMP_IMAGE_SUBTITLE_FILE="/tmp/transcode_image_sub.mkv"
 UNSUPPORTED_COVERS="mjpeg|png|bmp|jpeg2000|webp|pbm|pgm|ppm"
