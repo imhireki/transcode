@@ -11,7 +11,7 @@ has_pending_operations() {
 }
 
 is_burning_sub() {
-  [[ $(jq ".burning_sub" "$STATE") == true  ]] && return 0 || return 1
+  [[ $(jq ".is_burning_sub" "$STATE") == true  ]] && return 0 || return 1
 }
 
 initialize_state() {
