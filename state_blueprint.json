@@ -1,0 +1,12 @@
+{
+  "is_burning_sub": false,
+  "transcoding": {
+    "video": false,
+    "audio": false,
+    "subtitle": false
+  },
+  "index": {
+    "video": null,
+    "subtitle": null
+  }
+}
