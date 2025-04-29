@@ -15,6 +15,7 @@ make_audio_flags() {
       flags+=("-map 0:${index} -c:${index} copy")
     else
       flags+=("-map 0:${index} -c:${index} ${AUDIO_ENCODING_FLAGS}")
+      update_state ".transcoding.audio" true
     fi
   done < <(list_streams_by_type "$media" "a")
 
@@ -33,11 +34,15 @@ make_video_flags() {
     index=$(jq -r ".index" <<< "$stream")
     profile=$(jq -r ".profile" <<< "$stream")
 
+    # It's needed when burning subs, whether transcoding video or not.
+    update_state ".index.video" "$index"
+
     if match_attribute "$codec" "$SUPPORTED_VIDEO_CODECS" && \
        match_attribute "$profile" "$SUPPORTED_VIDEO_PROFILES"; then
       echo "-map 0:${index} -c:${index} copy"
     else
       echo "-map 0:${index} -c:${index} ${VIDEO_ENCODING_FLAGS}"
+      update_state ".transcoding.video" true
     fi
 
   done < <(list_streams_by_type "$media" "v")
@@ -76,7 +81,11 @@ make_text_sub_flags() {
 
     # Remove forced disposition from the sub
     forced=$(jq -r ".disposition.forced" <<< "$stream")
-    [[ "$forced" ==  "1" ]] && flags+=("-disposition:${index} -forced")
+
+    if [[ "$forced" == "1" ]]; then
+      flags+=("-disposition:${index} -forced")
+      update_state ".transcoding.subtitle" true
+    fi
 
   done <<< "$indexes"
 
@@ -122,6 +131,9 @@ make_image_sub_flags() {
     echo "${sorted_subs_with_size[*]}" | head -n 1 | cut -d" " -f 1
   )
 
+  update_state ".index.subtitle" "$max_size_sub_index"
+  update_state ".transcoding.subtitle" true
+
   overlay_filter_flags=(
     "-filter_complex [0:v:0][0:${max_size_sub_index}]overlay[v]"
     "-map [v]"
@@ -147,5 +159,8 @@ make_subtitle_flags() {
   image_sub_flags=$(make_image_sub_flags "$media" "$image_sub_indexes")
 
   # There's only image-based subs.
-  [[ -n "$image_sub_flags" ]] && echo "$image_sub_flags"
+  if [[ -n "$image_sub_flags" ]]; then
+    update_state ".is_burning_sub" true
+    echo "$image_sub_flags"
+  fi
 }
