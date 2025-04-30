@@ -11,10 +11,12 @@ make_audio_flags() {
     index=$(jq -r ".index" <<< "$stream")
     codec=$(jq -r ".codec_name" <<< "$stream")
 
+    shared_counter=$(next_from_shared_counter)
+
     if match_attribute "$codec" "$SUPPORTED_AUDIO_CODECS"; then
-      flags+=("-map 0:${index} -c:${index} copy")
+      flags+=("-map 0:${index} -c:${shared_counter} copy")
     else
-      flags+=("-map 0:${index} -c:${index} ${AUDIO_ENCODING_FLAGS}")
+      flags+=("-map 0:${index} -c:${shared_counter} ${AUDIO_ENCODING_FLAGS}")
       update_state ".transcoding.audio" true
     fi
   done < <(list_streams_by_type "$media" "a")
@@ -39,15 +41,17 @@ make_video_flags() {
 
     index=$(jq -r ".index" <<< "$stream")
     profile=$(jq -r ".profile" <<< "$stream")
+    shared_counter=$(next_from_shared_counter)
 
     # It's needed when burning subs, whether transcoding video or not.
-    update_state ".index.video" "$index"
+    update_state ".video.input_index" "$index"
+    update_state ".video.output_index" "$shared_counter"
 
     if match_attribute "$codec" "$SUPPORTED_VIDEO_CODECS" && \
        match_attribute "$profile" "$SUPPORTED_VIDEO_PROFILES"; then
-      echo "-map 0:${index} -c:${index} copy"
+      echo "-map 0:${index} -c:${shared_counter} copy"
     else
-      echo "-map 0:${index} -c:${index} ${VIDEO_ENCODING_FLAGS}"
+      echo "-map 0:${index} -c:${shared_counter} ${VIDEO_ENCODING_FLAGS}"
       update_state ".transcoding.video" true
     fi
 
@@ -82,17 +86,16 @@ make_text_sub_flags() {
 
   while IFS= read -r index; do
     stream=$(select_stream_by_index "$media" "$index")
+    shared_counter=$(next_from_shared_counter)
 
-    flags+=("-map 0:${index} -c:${index} copy")
+    flags+=("-map 0:${index} -c:${shared_counter} copy")
 
     # Remove forced disposition from the sub
     forced=$(jq -r ".disposition.forced" <<< "$stream")
-
     if [[ "$forced" == "1" ]]; then
-      flags+=("-disposition:${index} -forced")
+      flags+=("-disposition:${shared_counter} -forced")
       update_state ".transcoding.subtitle" true
     fi
-
   done <<< "$indexes"
 
   echo "${flags[*]}"
@@ -106,6 +109,8 @@ make_image_sub_flags() {
 
   # The loop would run once, even if the indexes is empty
   [[ -z "$indexes" ]] && return
+
+  update_state ".transcoding.subtitle" true
 
   while IFS= read -r index; do
     stream=$(select_stream_by_index "$media" "$index")
@@ -137,13 +142,14 @@ make_image_sub_flags() {
     echo "${sorted_subs_with_size[*]}" | head -n 1 | cut -d" " -f 1
   )
 
-  update_state ".index.subtitle" "$max_size_sub_index"
-  update_state ".transcoding.subtitle" true
+  input_video_index=$(jq ".video.input_index" "$STATE")
 
   overlay_filter_flags=(
-    "-filter_complex [0:v:0][0:${max_size_sub_index}]overlay[v]"
-    "-map [v]"
+    -filter_complex
+    "[0:${input_video_index}][0:${max_size_sub_index}]overlay[v]"
+    -map "[v]"
   )
+
   echo "${overlay_filter_flags[@]}"
 }
 

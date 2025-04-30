@@ -5,8 +5,8 @@
     "audio": false,
     "subtitle": false
   },
-  "index": {
-    "video": null,
-    "subtitle": null
+  "video": {
+    "input_index": null,
+    "output_index": null
   }
 }
