@@ -18,6 +18,10 @@ initialize_state() {
   cp "state_blueprint.json" "$STATE"
 }
 
+initialize_shared_counter() {
+  echo -1 > "$SHARED_COUNTER"
+}
+
 update_state() {
   key="$1"  # .transcoding.video
   value="$2"
@@ -32,9 +36,16 @@ update_state() {
   echo "$new_state" > "$STATE"
 }
 
+next_from_shared_counter() {
+  counter=$(cat "$SHARED_COUNTER")
+  ((counter++))
+  echo "$counter" | tee "$SHARED_COUNTER"
+}
+
 cleanup() {
   [[ -f "$STATE" ]] && rm "$STATE"
   [[ -f "$PROGRESS" ]] && rm "$PROGRESS"
+  [[ -f "$SHARED_COUNTER" ]] && rm "$SHARED_COUNTER"
 }
 
 match_attribute() {

@@ -1,3 +1,4 @@
+SHARED_COUNTER="/tmp/transcode_counter_${$}"
 STATE="/tmp/transcode_state_${$}.json"
 PROGRESS="/tmp/transcode_progress_${$}.log"
 BURN_IMAGE_SUBTITLE=true
