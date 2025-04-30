@@ -22,13 +22,9 @@ make_audio_flags() {
   echo "${flags[*]}"
 }
 
-make_reencoding_video_flags() {
-  input_index=$(jq ".video.input_index" "$STATE")
+make_burning_sub_video_flags() {
   output_index=$(jq ".video.output_index" "$STATE")
-  flags=(
-    "-map" "0:${input_index}" "-c:${output_index}"
-    "$VIDEO_ENCODING_FLAGS"
-  )
+  flags=( "-c:${output_index}" "$VIDEO_ENCODING_FLAGS" )
   echo "${flags[*]}"
 }
 
