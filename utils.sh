@@ -1,5 +1,7 @@
 #!/usr/bin/bash
 
+source ./config.sh
+
 has_pending_operations() {
   if [[ $(jq ".transcoding.video" "$STATE") == false ]] &&
      [[ $(jq ".transcoding.audio" "$STATE") == false ]] &&
