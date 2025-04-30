@@ -8,6 +8,8 @@ transcode() {
   to_directory="$2"
 
   add_filename_to_json "$media"
+  initialize_shared_counter
+  initialize_state
 
   video_flags=$(make_video_flags "$media")
   audio_flags=$(make_audio_flags "$media")
@@ -43,7 +45,7 @@ transcode() {
   ffmpeg -v quiet -stats -hide_banner -nostdin -i "$media" \
     ${flags[@]} "$output_filename" 2>> /tmp/transcode_stats
 
-  rm /tmp/transcode_stats
+  cleanup
 }
 
 media_path="$1"
