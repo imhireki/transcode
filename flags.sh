@@ -17,7 +17,7 @@ make_audio_flags() {
       flags+=("-map 0:${index} -c:${shared_counter} copy")
     else
       flags+=("-map 0:${index} -c:${shared_counter} ${AUDIO_ENCODING_FLAGS}")
-      update_state ".transcoding.audio" true
+      update_json ".transcoding.audio" true "$STATE"
     fi
   done < <(list_streams_by_type "$media" "a")
 
@@ -44,15 +44,15 @@ make_video_flags() {
     shared_counter=$(next_from_shared_counter)
 
     # It's needed when burning subs, whether transcoding video or not.
-    update_state ".video.input_index" "$index"
-    update_state ".video.output_index" "$shared_counter"
+    update_json ".video.input_index" "$index" "$STATE"
+    update_json ".video.output_index" "$shared_counter" "$STATE"
 
     if match_attribute "$codec" "$SUPPORTED_VIDEO_CODECS" && \
        match_attribute "$profile" "$SUPPORTED_VIDEO_PROFILES"; then
       echo "-map 0:${index} -c:${shared_counter} copy"
     else
       echo "-map 0:${index} -c:${shared_counter} ${VIDEO_ENCODING_FLAGS}"
-      update_state ".transcoding.video" true
+      update_json ".transcoding.video" true "$STATE"
     fi
 
   done < <(list_streams_by_type "$media" "v")
@@ -94,7 +94,7 @@ make_text_sub_flags() {
     forced=$(jq -r ".disposition.forced" <<< "$stream")
     if [[ "$forced" == "1" ]]; then
       flags+=("-disposition:${shared_counter} -forced")
-      update_state ".transcoding.subtitle" true
+      update_json ".transcoding.subtitle" true "$STATE"
     fi
   done <<< "$indexes"
 
@@ -110,7 +110,7 @@ make_image_sub_flags() {
   # The loop would run once, even if the indexes is empty
   [[ -z "$indexes" ]] && return
 
-  update_state ".transcoding.subtitle" true
+  update_json ".transcoding.subtitle" true "$STATE"
 
   while IFS= read -r index; do
     stream=$(select_stream_by_index "$media" "$index")
@@ -172,7 +172,7 @@ make_subtitle_flags() {
 
   # There's only image-based subs.
   if [[ -n "$image_sub_flags" ]]; then
-    update_state ".is_burning_sub" true
+    update_json ".is_burning_sub" true "$STATE"
     echo "$image_sub_flags"
   fi
 }

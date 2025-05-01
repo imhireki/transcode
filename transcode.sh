@@ -7,13 +7,11 @@ transcode() {
   media="$1"
   output="$2"
 
-  initialize_shared_counter
-  initialize_state
+  initialize_storage
 
-  # Menu's metadata
-  update_state ".filename" "$media"
-  update_state ".directory.input" "$(dirname "$media")"
-  update_state ".directory.output" "$(dirname "$output")"
+  update_json ".filename" "$media" "$METADATA"
+  update_json ".directory.input" "$(dirname "$media")" "$METADATA"
+  update_json ".directory.output" "$(dirname "$output")" "$METADATA"
 
   read -ra video_flags < <(make_video_flags "$media")
   read -ra audio_flags < <(make_audio_flags "$media")
@@ -31,7 +29,7 @@ transcode() {
   ffmpeg -v quiet -stats -hide_banner -nostin \
     -i "$media" "${flags[@]}" "$output"
 
-  cleanup
+  cleanup_storage
 }
 
 media_path=$(realpath "$1" 2>/dev/null || echo "")
