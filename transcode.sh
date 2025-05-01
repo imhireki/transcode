@@ -5,9 +5,8 @@ source ./flags.sh
 
 transcode() {
   media="$1"
-  to_directory="$2"
+  output="$2"
 
-  add_filename_to_json "$media"
   initialize_shared_counter
   initialize_state
 
@@ -24,25 +23,16 @@ transcode() {
     flags=( "${video_flags[@]}" "${audio_flags[@]}" "${subtitle_flags[@]}" )
   fi
 
-  output_filename=$(get_output_filename "$media" "$to_directory")
-
   ffmpeg -v quiet -stats -hide_banner -nostin \
-    -i "$media" "${flags[@]}" "$output_filename"
+    -i "$media" "${flags[@]}" "$output"
 
   cleanup
 }
 
-media_path="$1"
-to_directory="$2"
+media_path=$(realpath "$1" 2>/dev/null || echo "")
+to_directory=$(realpath -m "$2" 2>/dev/null || echo "$PWD")
 
-if [ -d "$media_path" ]; then
-  from_directory="${media_path%/}/"  # Add trailing slash if not present
-  save_working_dirs_to_json "$from_directory" "$to_directory"
-
-  while IFS= read -r media; do
-    transcode "$media" "$to_directory"
-  done < <(find "$from_directory" -maxdepth 1 -type f | sort)
-
-elif [ -f "$media_path" ]; then
-  transcode "$media_path" "$to_directory"
-fi
+while IFS= read -r media; do
+  output=$(get_output_filename "$media" "$to_directory")
+  transcode "$media" "$output"
+done < <(find "$media_path" -maxdepth 1 -type f | sort)
