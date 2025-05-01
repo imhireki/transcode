@@ -24,6 +24,10 @@ initialize_shared_counter() {
   echo -1 > "$SHARED_COUNTER"
 }
 
+is_valid_json() {
+  echo "$1" | jq -e . >/dev/null 2>&1
+}
+
 update_state() {
   key="$1"  # .transcoding.video
   value="$2"
@@ -31,9 +35,11 @@ update_state() {
   # value matches state's value
   [[ $(jq "$key" "$STATE") == "$value" ]] && return
 
-  # pass value as json, so booleans are not quoted
+  # Ensure --arg is used for strings and --argjson for everything else
+  argtype=$(is_valid_json "$value" && echo "--argjson" || echo "--arg")
+
   # pass key directly, so it can use nested keys (.a.b)
-  new_state=$(jq --argjson value "$value" "($key) = \$value" "$STATE")
+  new_state=$(jq "$argtype" value "$value" "($key) = \$value" "$STATE")
 
   echo "$new_state" > "$STATE"
 }
