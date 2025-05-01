@@ -28,20 +28,21 @@ is_valid_json() {
   echo "$1" | jq -e . >/dev/null 2>&1
 }
 
-update_state() {
+update_json() {
   key="$1"  # .transcoding.video
   value="$2"
+  json="$3"
 
   # value matches state's value
-  [[ $(jq "$key" "$STATE") == "$value" ]] && return
+  [[ $(jq "$key" "$json") == "$value" ]] && return
 
   # Ensure --arg is used for strings and --argjson for everything else
   argtype=$(is_valid_json "$value" && echo "--argjson" || echo "--arg")
 
   # pass key directly, so it can use nested keys (.a.b)
-  new_state=$(jq "$argtype" value "$value" "($key) = \$value" "$STATE")
+  new_state=$(jq "$argtype" value "$value" "($key) = \$value" "$json")
 
-  echo "$new_state" > "$STATE"
+  echo "$new_state" > "$json"
 }
 
 next_from_shared_counter() {
