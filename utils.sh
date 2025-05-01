@@ -16,11 +16,9 @@ is_burning_sub() {
   [[ $(jq ".is_burning_sub" "$STATE") == true  ]] && return 0 || return 1
 }
 
-initialize_state() {
-  cp "state_blueprint.json" "$STATE"
-}
-
-initialize_shared_counter() {
+initialize_storage() {
+  cp "default_state.json" "$STATE"
+  cp "default_metadata.json" "$METADATA"
   echo -1 > "$SHARED_COUNTER"
 }
 
@@ -51,7 +49,8 @@ next_from_shared_counter() {
   echo "$counter" | tee "$SHARED_COUNTER"
 }
 
-cleanup() {
+cleanup_storage() {
+  [[ -f "$METADATA" ]] && rm "$METADATA"
   [[ -f "$STATE" ]] && rm "$STATE"
   [[ -f "$PROGRESS" ]] && rm "$PROGRESS"
   [[ -f "$SHARED_COUNTER" ]] && rm "$SHARED_COUNTER"
