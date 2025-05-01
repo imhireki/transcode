@@ -104,7 +104,7 @@ get_output_filename() {
   # Add .transcode. if the output is going to where the input is
   media_dir=$(dirname "$media")
   if [[ "$to_directory" == "$media_dir" ]]; then
-    echo "${title}.transcoded.${extension}"
+    echo "${to_directory}/${title}.transcoded.${extension}"
   else
     mkdir -p "$to_directory"
     echo "${to_directory}/${title}.${extension}"
