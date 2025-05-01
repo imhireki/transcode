@@ -10,6 +10,11 @@ transcode() {
   initialize_shared_counter
   initialize_state
 
+  # Menu's metadata
+  update_state ".filename" "$media"
+  update_state ".directory.input" "$(dirname "$media")"
+  update_state ".directory.output" "$(dirname "$output")"
+
   read -ra video_flags < <(make_video_flags "$media")
   read -ra audio_flags < <(make_audio_flags "$media")
   read -ra subtitle_flags < <(make_subtitle_flags "$media")

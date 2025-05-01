@@ -8,5 +8,10 @@
   "video": {
     "input_index": null,
     "output_index": null
+  },
+  "filename": "",
+  "directory": {
+    "input": "",
+    "output": ""
   }
 }
