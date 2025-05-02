@@ -2,6 +2,22 @@
 
 source ./config.sh
 
+parse_progress() {
+  progress=()
+  counter=0
+
+  while IFS='=' read -r key value; do
+    if [[ counter -eq 12 ]]; then
+      printf '%s,' "${progress[@]}" > "$PROGRESS"
+      progress=()
+      counter=0
+    fi
+
+    progress+=("$value")
+    ((counter++))
+  done
+}
+
 has_pending_operations() {
   if [[ $(jq ".transcoding.video" "$STATE") == false ]] &&
      [[ $(jq ".transcoding.audio" "$STATE") == false ]] &&
