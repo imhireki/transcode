@@ -26,8 +26,7 @@ transcode() {
     flags=( "${video_flags[@]}" "${audio_flags[@]}" "${subtitle_flags[@]}" )
   fi
 
-  ffmpeg -v quiet -stats -hide_banner -nostin \
-    -i "$media" "${flags[@]}" "$output"
+  ffmpeg -v quiet -stats -hide_banner -nostdin -i "$media" "${flags[@]}" "$output"
 
   cleanup_storage
 }
