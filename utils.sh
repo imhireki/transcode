@@ -18,6 +18,13 @@ parse_progress() {
   done
 }
 
+get_duration() {
+  media="$1"
+
+  ffprobe -v quiet -show_entries format=duration \
+    -print_format json  "test.mkv" | jq -r ".format.duration"
+}
+
 has_pending_operations() {
   if [[ $(jq ".transcoding.video" "$STATE") == false ]] &&
      [[ $(jq ".transcoding.audio" "$STATE") == false ]] &&

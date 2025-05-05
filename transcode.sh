@@ -12,6 +12,7 @@ transcode() {
   update_json ".filename" "$media" "$METADATA"
   update_json ".directory.input" "$(dirname "$media")" "$METADATA"
   update_json ".directory.output" "$(dirname "$output")" "$METADATA"
+  update_json ".duration" "$(get_duration "$media" )" "$METADATA"
 
   read -ra video_flags < <(make_video_flags "$media")
   read -ra audio_flags < <(make_audio_flags "$media")
