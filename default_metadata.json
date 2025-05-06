@@ -1,8 +1,5 @@
 {
-  "filename": "",
-  "duration": null,
-  "directory": {
-    "input": "",
-    "output": ""
-  }
+  "num_input_files": 0,
+  "num_output_files": 0,
+  "duration": null
 }
