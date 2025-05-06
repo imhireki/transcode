@@ -19,17 +19,6 @@ get_directory_progress() {
   echo "files done ${num_output_files}/${num_input_files} (${percentage}%)\n"
 }
 
-
-_get_raw_stats() {
-  # Wait 3s max for the stats
-  sleep_counter=0
-  while ! [ -e /tmp/transcode_stats ]; do
-    [ "$sleep_counter" -gt 2 ] && return 1 # Return when the time runs out
-    sleep 1 && ((sleep_counter++))
-  done
-  echo $(awk -F"\r" '{ print $(NF-1) }' < /tmp/transcode_stats)
-}
-
 get_stats() {
   # 2:quality 8:dup_frames 9:drop_frames 11:progress
   IFS="," read -ra stats < "$PROGRESS"
