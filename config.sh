@@ -1,7 +1,7 @@
-SHARED_COUNTER="/tmp/transcode_counter_${$}"
-METADATA="/tmp/transcode_metadata_${$}"
-STATE="/tmp/transcode_state_${$}.json"
-PROGRESS="/tmp/transcode_progress_${$}"
+SHARED_COUNTER="/tmp/transcode_counter"
+METADATA="/tmp/transcode_metadata"
+STATE="/tmp/transcode_state.json"
+PROGRESS="/tmp/transcode_progress"
 BURN_IMAGE_SUBTITLE=true
 TEMP_IMAGE_SUBTITLE_FILE="/tmp/transcode_image_sub.mkv"
 UNSUPPORTED_COVERS="mjpeg|png|bmp|jpeg2000|webp|pbm|pgm|ppm"
