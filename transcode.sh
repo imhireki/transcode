@@ -27,7 +27,22 @@ transcode() {
 media_path=$(realpath "$1" 2>/dev/null || echo "")
 to_directory=$(realpath -m "$2" 2>/dev/null || echo "$PWD")
 
-while IFS= read -r media; do
+files=$(find "$media_path" -maxdepth 1 -type f 2>/dev/null | sort)
+readarray -t files < <(find "$media_path" -maxdepth 1 -type f 2>/dev/null | sort)
+
+initialize_metadata
+update_json ".num_input_files" "${#files[@]}" "$METADATA"
+
+for media in "${files[@]}"; do
+  update_json ".duration" "$(get_duration "$media" )" "$METADATA"
+
+  initialize_state
   output=$(get_output_filename "$media" "$to_directory")
   transcode "$media" "$output"
-done < <(find "$media_path" -maxdepth 1 -type f | sort)
+  cleanup_state
+
+  num_output_files=$(jq -r ".num_output_files" "$METADATA")
+  ((num_output_files++))
+  update_json ".num_output_files" "$num_output_files" "$METADATA"
+done
+cleanup_metadata
