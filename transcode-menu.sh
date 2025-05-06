@@ -1,5 +1,7 @@
 #!/usr/bin/bash
 
+source ./config.sh
+
 get_directory_progress() {
   INPUT_DIR=$(jq -r ".INPUT_DIR" /tmp/transcode_data.json 2> /dev/null)
   OUTPUT_DIR=$(jq -r ".OUTPUT_DIR" /tmp/transcode_data.json 2> /dev/null)
@@ -28,29 +30,30 @@ _get_raw_stats() {
   echo $(awk -F"\r" '{ print $(NF-1) }' < /tmp/transcode_stats)
 }
 
-
 get_stats() {
-  FILENAME=$(jq -r ".FILENAME" /tmp/transcode_data.json 2> /dev/null)
+  # 2:quality 8:dup_frames 9:drop_frames 11:progress
+  IFS="," read -ra stats < "$PROGRESS"
 
-  stats=$(_get_raw_stats) || return 1
+  duration=$(jq -r ".duration" "$METADATA")
+  time=$(
+    awk -F: '{ print ($1 * 3600) + ($2 * 60) + $3 }' <<< "${stats[7]}"
+  )
+  duration_percentage=$(
+    awk -v x="$time" -v y="$duration" 'BEGIN { printf "%.1f\n",  (x * 100) / y }'
+  )
+  pretty_time=$(date -u -d "@$time" +%T)
+  pretty_duration=$(date -u -d "@$duration" +%T)
 
-  frame=$(echo "$stats" | grep -Po "frame=\s*\d+" | grep -Po "\d+")
-  fps=$(echo "$stats" | grep -Po "fps=\s*\d+" | grep -Po "\d+")
-  size=$(echo "$stats" | grep -Po "size=\s*\S+" | grep -Po "\d+.*")
-  time=$(echo "$stats" | grep -Po "time=\S+" | grep -Po "(?<==)\S+")
-  bitrate=$(echo "$stats" | grep -Po "bitrate=\s*\S+" | grep -Po "(?<=[= ])\S+")
-  speed=$(echo "$stats" | grep -Po "speed=\s*\S+" | grep -Po "(?<=[= ])\S+")
+  size=$(numfmt --to=iec --suffix=B --format="%.1f" "${stats[4]}")
 
-  duration=$(ffprobe -v error -show_entries format=duration \
-             -of default=nw=1:nk=1 "$FILENAME" | cut -d. -f1)
+  # time 00:01:15/00:24:32 (5.1%) frame 1809 (69.52 fps)
+  # birate 5175.6kbits/s (46.5MB) at 2.9x
+  progress=(
+    "time ${pretty_time%*.}/${pretty_duration%*.} (${duration_percentage}%)"
+    "frame ${stats[0]} (${stats[1]} fps)"
+    "birate ${stats[3]} (${size})" "at ${stats[10]#' '}"
+  )
 
-  # Convert to seconds
-  time=$(echo "$time" | awk -F: '{ print ($1 * 3600) + ($2 * 60) + $3 }' | cut -d. -f1)
-
-  duration_percentage=$(( (time * 100) / duration ))
-
-  progress=("time ${time}s/${duration}s (${duration_percentage}%)" "speed $speed"
-            "frames $frame" "fps $fps" "size $size" "bitrate $bitrate")
   printf "%s\n" "${progress[@]}"
 }
 
