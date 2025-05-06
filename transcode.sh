@@ -7,13 +7,6 @@ transcode() {
   media="$1"
   output="$2"
 
-  initialize_storage
-
-  update_json ".filename" "$media" "$METADATA"
-  update_json ".directory.input" "$(dirname "$media")" "$METADATA"
-  update_json ".directory.output" "$(dirname "$output")" "$METADATA"
-  update_json ".duration" "$(get_duration "$media" )" "$METADATA"
-
   read -ra video_flags < <(make_video_flags "$media")
   read -ra audio_flags < <(make_audio_flags "$media")
   read -ra subtitle_flags < <(make_subtitle_flags "$media")
@@ -29,8 +22,6 @@ transcode() {
 
   ffmpeg -v quiet -hide_banner -nostdin -progress pipe:1 \
     -i "$media" "${flags[@]}" "$output" | parse_progress
-
-  cleanup_storage
 }
 
 media_path=$(realpath "$1" 2>/dev/null || echo "")
