@@ -39,10 +39,23 @@ is_burning_sub() {
   [[ $(jq ".is_burning_sub" "$STATE") == true  ]] && return 0 || return 1
 }
 
-initialize_storage() {
-  cp "default_state.json" "$STATE"
+initialize_metadata() {
   cp "default_metadata.json" "$METADATA"
+}
+
+initialize_state() {
+  cp "default_state.json" "$STATE"
   echo -1 > "$SHARED_COUNTER"
+}
+
+cleanup_state() {
+  [[ -f "$STATE" ]] && rm "$STATE"
+  [[ -f "$PROGRESS" ]] && rm "$PROGRESS"
+  [[ -f "$SHARED_COUNTER" ]] && rm "$SHARED_COUNTER"
+}
+
+cleanup_metadata() {
+  [[ -f "$METADATA" ]] && rm "$METADATA"
 }
 
 is_valid_json() {
@@ -70,13 +83,6 @@ next_from_shared_counter() {
   counter=$(cat "$SHARED_COUNTER")
   ((counter++))
   echo "$counter" | tee "$SHARED_COUNTER"
-}
-
-cleanup_storage() {
-  [[ -f "$METADATA" ]] && rm "$METADATA"
-  [[ -f "$STATE" ]] && rm "$STATE"
-  [[ -f "$PROGRESS" ]] && rm "$PROGRESS"
-  [[ -f "$SHARED_COUNTER" ]] && rm "$SHARED_COUNTER"
 }
 
 match_attribute() {
