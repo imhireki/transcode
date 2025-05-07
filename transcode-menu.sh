@@ -39,12 +39,17 @@ get_stats() {
   printf "%s\n" "${progress[@]}"
 }
 
-
 show_progress() {
-  directory_progress=$(get_directory_progress)
-  stats=$(get_stats) || return 1
-  echo -e "${directory_progress}${stats}" | rofi -dmenu -i -p "Transcoding"
-}
+  stats_progress=$(get_stats)
+  files_progress=$(get_files_progress)
 
+  # Select item -> Quit
+  # ESC         -> Reload
+  menu=$(
+    echo -e "${files_progress}\n${stats_progress}" |
+      rofi -dmenu -i -p "Transcoding"
+  )
+  [[ -z "$menu" ]] && show_progress
+}
 
 show_progress
