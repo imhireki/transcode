@@ -4,15 +4,18 @@ source ./utils.sh
 source ./flags.sh
 
 build_ordered_flags() {
-  media="$1"
+  local media="$1"
 
   initialize_state
 
+  local video_flags audio_flags subtitle_flags
   read -ra video_flags < <(make_video_flags "$media")
   read -ra audio_flags < <(make_audio_flags "$media")
   read -ra subtitle_flags < <(make_subtitle_flags "$media")
 
   has_pending_operations || { cleanup_state; return; }
+
+  local flags=()
 
   if is_burning_sub; then
     read -ra video_flags < <(make_burning_sub_video_flags)
@@ -27,12 +30,13 @@ build_ordered_flags() {
 }
 
 transcode() {
-  media="$1"
-  output="$2"
+  local media="$1"
+  local output="$2"
 
   update_json ".duration" "$(get_duration "$media" )" "$METADATA"
 
   # Get ordered flags for ffmpeg
+  local ordered_flags
   read -ra ordered_flags < <(build_ordered_flags "$media")
   [[ "${#ordered_flags}" -eq 0 ]] && return 1
 
@@ -40,6 +44,7 @@ transcode() {
     -i "$media" "${ordered_flags[@]}" "$output" | parse_progress
 
   # The file's been processed. Increase counter.
+  local num_output_files
   num_output_files=$(jq -r ".num_output_files" "$METADATA")
   ((num_output_files++))
   update_json ".num_output_files" "$num_output_files" "$METADATA"
