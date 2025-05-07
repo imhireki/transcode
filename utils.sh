@@ -3,8 +3,9 @@
 source ./config.sh
 
 parse_progress() {
-  progress=()
-  counter=0
+  local progress=()
+  local counter=0
+  local key value
 
   while IFS='=' read -r key value; do
     if [[ counter -eq 12 ]]; then
@@ -19,7 +20,7 @@ parse_progress() {
 }
 
 get_duration() {
-  media="$1"
+  local media="$1"
 
   ffprobe -v quiet -show_entries format=duration \
     -print_format json  "test.mkv" | jq -r ".format.duration"
@@ -63,41 +64,45 @@ is_valid_json() {
 }
 
 update_json() {
-  key="$1"  # .transcoding.video
-  value="$2"
-  json="$3"
+  local key="$1"  # .transcoding.video
+  local value="$2"
+  local json="$3"
 
-  # value matches state's value
+  # value matches json's value
   [[ $(jq "$key" "$json") == "$value" ]] && return
 
   # Ensure --arg is used for strings and --argjson for everything else
+  local argtype
   argtype=$(is_valid_json "$value" && echo "--argjson" || echo "--arg")
 
   # pass key directly, so it can use nested keys (.a.b)
-  new_state=$(jq "$argtype" value "$value" "($key) = \$value" "$json")
+  local new_json
+  new_json=$(jq "$argtype" value "$value" "($key) = \$value" "$json")
 
-  echo "$new_state" > "$json"
+  echo "$new_json" > "$json"
 }
 
 next_from_shared_counter() {
+  local counter
   counter=$(cat "$SHARED_COUNTER")
   ((counter++))
   echo "$counter" | tee "$SHARED_COUNTER"
 }
 
 match_attribute() {
-  attribute="$1"  # h264
-  supported_values="$2"  # "h264|hevc"
+  local attribute="$1"  # h264
+  local supported_values="$2"  # "h264|hevc"
 
-  regex="^(${supported_values})$"
+  local regex="^(${supported_values})$"
 
   [[ "$attribute" =~ $regex ]] && return 0 || return 1
 }
 
 select_stream_by_index() {
-  media="$1"
-  index="$2"
+  local media="$1"
+  local index="$2"
 
+  local matching_streams
   matching_streams=$(
     ffprobe -v quiet -show_streams -select_streams \
       "$index" -print_format json "$media"
@@ -107,21 +112,23 @@ select_stream_by_index() {
 
 list_streams_by_type() {
   # a: audio, v: video, s: subtitle
-  media="$1"
-  stream_type="$2"
+  local media="$1"
+  local stream_type="$2"
 
   ffprobe -v quiet -show_streams -select_streams "$stream_type" \
     -print_format json "$media" | jq -c ".streams[]"
 }
 
 get_output_filename() {
-  media="$1"
-  to_directory="$2"
+  local media="$1"
+  local to_directory="$2"
 
+  local filename title extension
   filename=$(basename "$media")  # a/b/c.mkv -> c.mkv
   title="${filename%.*}"
   extension="${filename##*.}"
 
+  local format_name
   format_name=$(
     ffprobe -v quiet -show_entries format=format_name \
     -print_format json  "$media" | jq -r ".format.format_name"
@@ -131,7 +138,9 @@ get_output_filename() {
   fi
 
   # Add .transcode. if the output is going to where the input is
+  local media_dir
   media_dir=$(dirname "$media")
+
   if [[ "$to_directory" == "$media_dir" ]]; then
     echo "${to_directory}/${title}.transcoded.${extension}"
   else
