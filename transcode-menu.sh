@@ -2,21 +2,14 @@
 
 source ./config.sh
 
-get_directory_progress() {
-  INPUT_DIR=$(jq -r ".INPUT_DIR" /tmp/transcode_data.json 2> /dev/null)
-  OUTPUT_DIR=$(jq -r ".OUTPUT_DIR" /tmp/transcode_data.json 2> /dev/null)
+get_files_progress() {
+  num_input_files=$(jq -r ".num_input_files" "$METADATA")
+  num_output_files=$(jq -r ".num_output_files" "$METADATA")
 
-  # Return if env directories aren't present
-  ! [ -d "$INPUT_DIR" ] || ! [ -d "$OUTPUT_DIR" ] && return
-
-  num_input_files=$(find "$INPUT_DIR" -maxdepth 1 -type f | wc -l)
-  num_output_files=$(find "$OUTPUT_DIR" -maxdepth 1 -type f | wc -l)
-
-  # Take away 1 to show the number of files done.
-  [ $num_output_files -gt 0 ] && ((num_output_files--))
-
+  [[ "$num_input_files" -eq 0 ]] && return
   percentage=$(( (num_output_files * 100) / num_input_files))
-  echo "files done ${num_output_files}/${num_input_files} (${percentage}%)\n"
+
+  printf "%s\n" "files done ${num_output_files}/${num_input_files} (${percentage}%)"
 }
 
 get_stats() {
