@@ -173,3 +173,9 @@ get_output_filename() {
     echo "${to_directory}/${title}.${extension}"
   fi
 }
+
+display_help() {
+  echo "Usage: $0 SOURCE DIRECTORY"
+  echo "   or: $0 SOURCE_DIRECTORY DIRECTORY"
+  echo "Transcodes SOURCE to DIRECTORY based on your config."
+}

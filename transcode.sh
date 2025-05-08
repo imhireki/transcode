@@ -51,6 +51,8 @@ transcode() {
 }
 
 
+[[ "$1" =~ ^(-h|--help|-help)$ ]] && display_help
+
 media_path=$(realpath "$1" 2>/dev/null || echo "")
 to_directory=$(realpath -m "$2" 2>/dev/null || echo "$PWD")
 
