@@ -119,6 +119,31 @@ list_streams_by_type() {
     -print_format json "$media" | jq -c ".streams[]"
 }
 
+get_stream_size() {
+  local media="$1"
+  local index="$2"
+
+  local stream size
+
+  # Check for size in the stream's metadata
+  stream=$(select_stream_by_index "$media" "$index")
+  size=$(
+    echo "$stream" | jq -r ".tags" |
+      grep -i -Po '".*byte.*": "\d+"' |
+      grep -Po '(?<=: ")\d+'
+  )
+
+  if [[ -n "$size" ]]; then
+    echo "$size" && return
+  fi
+
+  # Calculate the size
+  ffmpeg -nostdin -v quiet -i "$media" -map 0:"$index" \
+    -c copy "$TEMP_IMAGE_SUBTITLE_FILE"
+  stat -c %s "$TEMP_IMAGE_SUBTITLE_FILE"
+  rm "$TEMP_IMAGE_SUBTITLE_FILE"
+}
+
 get_output_filename() {
   local media="$1"
   local to_directory="$2"
