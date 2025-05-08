@@ -34,6 +34,22 @@ make_burning_sub_video_flags() {
   echo "${flags[*]}"
 }
 
+make_overlay_filter_flags() {
+  local subtitle_index="$1"
+
+  local video_index
+  video_index=$(jq ".video.input_index" "$STATE")
+
+  local overlay_filter_flags
+  overlay_filter_flags=(
+    -filter_complex
+    "[0:${video_index}][0:${subtitle_index}]overlay[v]"
+    -map "[v]"
+  )
+
+  echo "${overlay_filter_flags[@]}"
+}
+
 make_video_flags() {
   local media="$1"
   local stream
