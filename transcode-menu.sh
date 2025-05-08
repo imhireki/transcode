@@ -45,6 +45,9 @@ get_stats() {
 }
 
 show_progress() {
+  # Necessary files to process the progress.
+  ! [[ -e "$PROGRESS" ]] || ! [[ -e "$METADATA" ]]  && return
+
   local stats_progress files_progress
   stats_progress=$(get_stats)
   files_progress=$(get_files_progress)
