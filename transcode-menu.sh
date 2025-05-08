@@ -57,7 +57,7 @@ show_progress() {
   local menu
   menu=$(
     echo -e "${files_progress}\n${stats_progress}" |
-      rofi -dmenu -i -p "Transcoding"
+      dmenu -i -p "Transcoding"
   )
   [[ -z "$menu" ]] && show_progress
 }
