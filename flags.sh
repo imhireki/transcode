@@ -137,56 +137,25 @@ make_text_sub_flags() {
 make_image_sub_flags() {
   local media="$1"
   local indexes="$2"
-  local subs_with_size=()
 
   # The loop would run once, even if the indexes is empty
   [[ -z "$indexes" ]] && return
 
   update_json ".transcoding.subtitle" true "$STATE"
-  local index
+  local index heaviest_stream_index heaviest_stream_size
 
   while IFS= read -r index; do
 
-    local stream size
-    stream=$(select_stream_by_index "$media" "$index")
-    size=$(
-      echo "$stream" | jq -r ".tags" |
-        grep -i -Po '".*byte.*": "\d+"' |
-        grep -Po '(?<=: ")\d+'
-    )
+    local size
+    size=$(get_stream_size "$media" "$index")
 
-    # Write to a temp file to get its size
-    if [[ -z "$size" ]]; then
-      ffmpeg -nostdin -v quiet -i "$media" -map 0:"$index" \
-        -c copy "$TEMP_IMAGE_SUBTITLE_FILE"
-      size=$(stat -c %s "$TEMP_IMAGE_SUBTITLE_FILE")
-      rm "$TEMP_IMAGE_SUBTITLE_FILE"
+    if [[ $size -gt $heaviest_stream_size ]]; then
+      heaviest_stream_index="$index"
+      heaviest_stream_size="$size"
     fi
-
-    subs_with_size+=("${index} ${size}")
-
   done <<< "$indexes"
 
-  # Sort by biggest size
-  local sorted_subs_with_size
-  readarray -t sorted_subs_with_size < <(
-    printf "%s\n" "${subs_with_size[@]}" | sort -k2 -rn
-  )
-
-  local max_size_sub_index input_video_index
-  max_size_sub_index=$(
-    echo "${sorted_subs_with_size[*]}" | head -n 1 | cut -d" " -f 1
-  )
-  input_video_index=$(jq ".video.input_index" "$STATE")
-
-  local overlay_filter_flags
-  overlay_filter_flags=(
-    -filter_complex
-    "[0:${input_video_index}][0:${max_size_sub_index}]overlay[v]"
-    -map "[v]"
-  )
-
-  echo "${overlay_filter_flags[@]}"
+  make_overlay_filter_flags "$heaviest_stream_index"
 }
 
 make_subtitle_flags() {
