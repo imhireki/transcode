@@ -62,6 +62,8 @@ make_video_flags() {
       update_json ".transcoding.video" true "$STATE"
     fi
 
+    # Skip any extra video stream or cover
+    return
   done < <(list_streams_by_type "$media" "v")
 }
 
